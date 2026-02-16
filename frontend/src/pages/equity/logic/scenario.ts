@@ -111,7 +111,6 @@ function validateScenario(opts: HandOptionId[], holeCards: CardStr[], board: Car
       case "straight": {
         const best = bestO(holeCards, board);
         if (!best || best.r !== 4) return false;
-        if (best.r === 5 || best.r === 8) return false;
         break;
       }
       case "flush": {

@@ -162,7 +162,7 @@ export function getNextPosition(codes: string[]): string | null {
   // Count how many active players have acted since the last raise
   let actedSinceRaise = 0;
   for (let i = lastRaiseStepIdx + 1; i < steps.length; i++) {
-    if (activePlayers.includes(steps[i].position)) {
+    if ((activePlayers as readonly string[]).includes(steps[i].position)) {
       actedSinceRaise++;
     }
   }

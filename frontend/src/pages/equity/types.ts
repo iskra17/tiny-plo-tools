@@ -66,7 +66,7 @@ export interface ScenarioResult {
 /** Hand option ID used in scenario builder */
 export type HandOptionId =
   | "top_pair" | "middle_pair" | "bottom_pair" | "overpair"
-  | "trips" | "top_set" | "middle_set" | "bottom_set"
+  | "trips" | "set" | "top_set" | "middle_set" | "bottom_set"
   | "two_pair" | "straight" | "flush" | "full_house" | "quads" | "nut_flush"
   | "oesd" | "gutshot" | "flush_draw" | "nut_flush_draw"
   | "wrap" | "combo_draw"
