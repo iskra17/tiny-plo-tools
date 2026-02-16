@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { useRangeData } from '../../hooks/useRangeData';
 import { ACTION_COLORS } from '../../constants/poker';
@@ -106,12 +106,31 @@ export function HoveredHandList() {
     label = `Filter: ${rangeInput.length > 20 ? rangeInput.slice(0, 20) + '...' : rangeInput}`;
     countLabel = `${displayHands.length}${displayHands.length >= 30 ? '+' : ''} combos`;
   } else {
-    const { rank1, rank2, suited } = hoveredCell!;
+    const { rank1, rank2 } = hoveredCell!;
     label = isStage2 && firstTwo
-      ? `${firstTwo.rank1}${firstTwo.rank2}${firstTwo.suited ? 's' : ''}+${rank1}${rank2}${suited ? 's' : 'o'}`
-      : `${rank1}${rank2}${suited ? 's' : 'o'}`;
-    label += ' Hands';
+      ? `${firstTwo.rank1}${firstTwo.rank2}+${rank1}${rank2}`
+      : `${rank1}${rank2}`;
     countLabel = `${displayHands.length}${displayHands.length >= 30 ? '+' : ''} combos`;
+  }
+
+  // Build suit badge for matrix hover mode
+  let suitBadge: ReactNode = null;
+  if (!isRangeMode && hoveredCell) {
+    const parts: ReactNode[] = [];
+    if (isStage2 && firstTwo) {
+      parts.push(
+        <span key="s1" className={firstTwo.suited ? 'text-blue-400' : 'text-slate-500'}>
+          {firstTwo.suited ? 's' : 'o'}
+        </span>
+      );
+      parts.push(<span key="sep" className="text-slate-600">+</span>);
+    }
+    parts.push(
+      <span key="s2" className={hoveredCell.suited ? 'text-blue-400' : 'text-slate-500'}>
+        {hoveredCell.suited ? 's' : 'o'}
+      </span>
+    );
+    suitBadge = <span className="text-[10px] font-medium flex gap-0.5">{parts}</span>;
   }
 
   const handleClickHand = (hand: string) => {
@@ -120,10 +139,12 @@ export function HoveredHandList() {
 
   return (
     <div className="px-3 py-2">
-      <div className="flex items-center gap-2 mb-1.5">
+      <div className="flex items-center gap-1.5 mb-1.5">
         <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">
           {label}
         </span>
+        {suitBadge}
+        <span className="text-[10px] text-slate-400 uppercase">Hands</span>
         <span className="text-[10px] text-slate-600">
           {countLabel}
         </span>

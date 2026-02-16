@@ -230,6 +230,13 @@ export function MatrixTab() {
         payload: { stage: 2, firstTwo: { rank1, rank2, suited } },
       });
     } else {
+      // Re-clicking the first pair cell → full reset to stage 1
+      const ft = matrixState.firstTwo;
+      if (ft && ft.rank1 === rank1 && ft.rank2 === rank2 && ft.suited === suited) {
+        handleBack();
+        return;
+      }
+
       // Toggle: re-clicking the same second pair resets it
       if (secondTwo && secondTwo.rank1 === rank1 && secondTwo.rank2 === rank2 && secondTwo.suited === suited) {
         setSecondTwo(null);
@@ -279,11 +286,9 @@ export function MatrixTab() {
     dispatch({ type: 'SET_HOVERED_CELL', payload: { rank1, rank2, suited } });
   }, [dispatch]);
 
-  // Sticky hover: don't clear hoveredCell on mouse leave so the hand list
-  // remains visible and scrollable. It updates when a new cell is hovered.
   const handleCellLeave = useCallback(() => {
-    // intentionally empty — keep last hovered data visible
-  }, []);
+    dispatch({ type: 'SET_HOVERED_CELL', payload: null });
+  }, [dispatch]);
 
   const handleBack = () => {
     dispatch({

@@ -74,7 +74,7 @@ export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorDat
   return (
     <div className="p-1 relative max-w-[680px]">
       {/* Card selection indicator — interactive */}
-      <div className="flex items-center justify-center gap-1 mb-1.5">
+      <div className="flex items-center gap-1 mb-1.5 pl-4">
         {/* First pair */}
         <button
           onClick={firstTwo ? onResetFirst : undefined}
