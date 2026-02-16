@@ -35,7 +35,7 @@ interface AppState {
   rangeSortBy: 'ev' | 'frequency';
   rangeSortOrder: 'asc' | 'desc';
 
-  activeTab: 'range' | 'matrix';
+  activeTab: 'range' | 'matrix' | 'quiz';
   hoveredCell: { rank1: string; rank2: string; suited: boolean } | null;
 }
 
@@ -54,7 +54,7 @@ type AppAction =
   | { type: 'SET_SELECTED_HANDS'; payload: string[] }
   | { type: 'SET_MATRIX_STATE'; payload: Partial<MatrixState> }
   | { type: 'SET_RANGE_INPUT'; payload: string }
-  | { type: 'SET_ACTIVE_TAB'; payload: 'range' | 'matrix' }
+  | { type: 'SET_ACTIVE_TAB'; payload: 'range' | 'matrix' | 'quiz' }
   | { type: 'SET_SELECTION_MODE'; payload: 'matrix' | 'range' }
   | { type: 'SET_RANGE_SORT_BY'; payload: 'ev' | 'frequency' }
   | { type: 'SET_RANGE_SORT_ORDER'; payload: 'asc' | 'desc' }

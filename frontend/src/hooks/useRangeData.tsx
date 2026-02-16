@@ -179,7 +179,7 @@ export function RangeDataProvider({ children }: { children: ReactNode }) {
             for (const code of sortedDerived) {
               const actionName = ACTION_MAP[code] || code;
               if (!actionEntry.actions[actionName]) {
-                actionEntry.actions[actionName] = { frequency: perDerived, ev: 0 };
+                actionEntry.actions[actionName] = { frequency: perDerived, ev: NaN };
               } else {
                 actionEntry.actions[actionName].frequency += perDerived;
               }
@@ -222,12 +222,16 @@ export function RangeDataProvider({ children }: { children: ReactNode }) {
         entry.primaryAction = maxAction;
         entry.primaryFreq = Math.max(0, maxFreq);
 
-        // Compute weighted average EV
+        // Compute weighted average EV (exclude NaN entries from derived actions)
         let weightedEv = 0;
+        let evFreqSum = 0;
         for (const data of Object.values(entry.actions)) {
-          weightedEv += data.frequency * data.ev;
+          if (!isNaN(data.ev)) {
+            weightedEv += data.frequency * data.ev;
+            evFreqSum += data.frequency;
+          }
         }
-        entry.totalEv = weightedEv;
+        entry.totalEv = evFreqSum > 0 ? weightedEv : NaN;
       }
 
       // Compute which actions are meaningful (primary for at least one hand)

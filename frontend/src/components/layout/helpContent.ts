@@ -76,6 +76,29 @@ export const HELP_ITEMS: HelpItem[] = [
       '6. Use Scenario Builder to compare multiple situations.',
     ],
   },
+  {
+    id: 'quiz-mode',
+    titleKo: '퀴즈 모드',
+    titleEn: 'Quiz Mode',
+    briefKo: 'GTO 전략을 퀴즈로 학습하고 실력을 측정합니다',
+    briefEn: 'Learn GTO strategy through quizzes and measure your skills',
+    detailedKo: [
+      '1. 상단 탭에서 Quiz를 선택하여 시작합니다.',
+      '2. 랜덤 핸드가 출제되면 Fold/Call/Raise 중 하나를 선택합니다.',
+      '3. 피드백 5단계: Perfect(최적) → Correct(정답) → Inaccuracy(부정확) → Mistake(실수) → Blunder(대실수)',
+      '4. 난이도 선택: 쉬움(전체) / 보통(순수 액션 제외) / 어려움(혼합 전략) / 매우 어려움(균등 선택지)',
+      '5. EV Loss: 최적 대비 손실 (bb 단위). 낮을수록 좋습니다.',
+      '6. 키보드 단축키: 1/2/3 = 액션 선택, Enter/Space = 다음 핸드',
+    ],
+    detailedEn: [
+      '1. Select the Quiz tab at the top to start.',
+      '2. A random hand is shown — choose Fold, Call, or Raise.',
+      '3. Feedback tiers: Perfect → Correct → Inaccuracy → Mistake → Blunder',
+      '4. Difficulty: Easy(all) / Normal(no pure actions) / Hard(mixed strategy) / Expert(near-equal choices)',
+      '5. EV Loss: loss vs optimal play (in bb). Lower is better.',
+      '6. Keyboard shortcuts: 1/2/3 = select action, Enter/Space = next hand',
+    ],
+  },
 ];
 
 export type HelpLang = 'ko' | 'en';

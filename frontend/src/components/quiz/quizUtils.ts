@@ -67,6 +67,41 @@ export interface SessionStats {
   tiers: Record<TierName, number>;
 }
 
+// ---------- Difficulty ----------
+
+export type DifficultyLevel = 'easy' | 'normal' | 'hard' | 'expert';
+
+export interface DifficultyConfig {
+  labelKo: string;
+  labelEn: string;
+  maxPrimaryFreq: number; // hands with primaryFreq <= this pass (1.0 = no filter)
+  color: string;          // tailwind text color class
+}
+
+export const DIFFICULTY_OPTIONS: Record<DifficultyLevel, DifficultyConfig> = {
+  easy:   { labelKo: '쉬움',     labelEn: 'Easy',   maxPrimaryFreq: 1.0,  color: 'text-green-400' },
+  normal: { labelKo: '보통',     labelEn: 'Normal', maxPrimaryFreq: 0.90, color: 'text-blue-400' },
+  hard:   { labelKo: '어려움',   labelEn: 'Hard',   maxPrimaryFreq: 0.70, color: 'text-orange-400' },
+  expert: { labelKo: '매우 어려움', labelEn: 'Expert', maxPrimaryFreq: 0.50, color: 'text-red-400' },
+};
+
+/**
+ * Filter hand keys by difficulty level based on primaryFreq.
+ * Returns filtered array of hand keys.
+ */
+export function filterByDifficulty(
+  keys: string[],
+  difficulty: DifficultyLevel,
+  handActionMap: Map<string, { primaryFreq: number }>,
+): string[] {
+  const config = DIFFICULTY_OPTIONS[difficulty];
+  if (config.maxPrimaryFreq >= 1.0) return keys;
+  return keys.filter((key) => {
+    const entry = handActionMap.get(key);
+    return entry ? entry.primaryFreq <= config.maxPrimaryFreq : false;
+  });
+}
+
 export function computeSessionStats(history: HistoryEntry[]): SessionStats {
   const tiers: Record<TierName, number> = {
     Perfect: 0, Correct: 0, Inaccuracy: 0, Mistake: 0, Blunder: 0,

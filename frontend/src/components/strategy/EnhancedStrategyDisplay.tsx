@@ -65,8 +65,8 @@ export function EnhancedStrategyDisplay() {
     return pct >= 0.5;
   });
 
-  // Compute maxEV for highlighting
-  const actionsWithEv = strategyActions.filter(a => a.ev !== 0);
+  // Compute maxEV for highlighting (exclude NaN derived actions)
+  const actionsWithEv = strategyActions.filter(a => !isNaN(a.ev) && a.ev !== 0);
   const maxEv = actionsWithEv.length > 0 ? Math.max(...actionsWithEv.map(a => a.ev)) : 0;
 
   return (
@@ -100,12 +100,12 @@ export function EnhancedStrategyDisplay() {
                               border border-slate-600 pointer-events-none">
                 <div className="font-semibold">{a.action}</div>
                 <div className="text-slate-300">Freq: {pct.toFixed(1)}%</div>
-                {a.ev !== 0 && (
+                {!isNaN(a.ev) && a.ev !== 0 && (
                   <div className={a.ev >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                     EV: {a.ev >= 0 ? '+' : ''}{(a.ev / 1000).toFixed(2)}bb
                   </div>
                 )}
-                {a.ev !== 0 && maxEv !== 0 && a.ev !== maxEv && (
+                {!isNaN(a.ev) && a.ev !== 0 && maxEv !== 0 && a.ev !== maxEv && (
                   <div className="text-amber-400">
                     Diff: {((a.ev - maxEv) / 1000).toFixed(2)}bb
                   </div>
@@ -122,7 +122,7 @@ export function EnhancedStrategyDisplay() {
         {strategyActions.map((a) => {
           const pct = totalFreq > 0 ? (a.frequency / totalFreq) * 100 : 0;
           const color = ACTION_COLORS[a.action];
-          const isMaxEv = a.ev !== 0 && a.ev === maxEv;
+          const isMaxEv = !isNaN(a.ev) && a.ev !== 0 && a.ev === maxEv;
           return (
             <div
               key={a.actionCode}
@@ -140,9 +140,9 @@ export function EnhancedStrategyDisplay() {
                 {pct.toFixed(1)}%
               </span>
               <span className={`text-xs w-14 text-right font-medium ${
-                a.ev === 0 ? 'text-slate-500' : a.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
+                isNaN(a.ev) || a.ev === 0 ? 'text-slate-500' : a.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
               }`}>
-                {a.ev !== 0 ? `${a.ev >= 0 ? '+' : ''}${(a.ev / 1000).toFixed(2)}bb` : '-'}
+                {isNaN(a.ev) || a.ev === 0 ? '-' : `${a.ev >= 0 ? '+' : ''}${(a.ev / 1000).toFixed(2)}bb`}
               </span>
               {isMaxEv && <span className="text-[10px] text-emerald-500">★</span>}
             </div>

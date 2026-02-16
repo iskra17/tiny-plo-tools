@@ -16,12 +16,12 @@ interface Props {
 export function QuizFeedback({ hand, chosenAction, tier, evLoss, actions, actionOrder, onNext }: Props) {
   const tierCfg = TIER_CONFIG[tier];
 
-  // Find max EV action
+  // Find max EV action (exclude NaN from derived actions)
   let maxEvAction = '';
   let maxEv = -Infinity;
   for (const name of actionOrder) {
     const data = actions[name];
-    if (data && data.ev > maxEv) {
+    if (data && !isNaN(data.ev) && data.ev > maxEv) {
       maxEv = data.ev;
       maxEvAction = name;
     }
@@ -97,7 +97,7 @@ export function QuizFeedback({ hand, chosenAction, tier, evLoss, actions, action
           const pct = totalFreq > 0 ? (data.frequency / totalFreq) * 100 : 0;
           const color = ACTION_COLORS[name];
           const isChosen = name === chosenAction;
-          const isBest = name === maxEvAction && data.ev !== 0;
+          const isBest = name === maxEvAction && !isNaN(data.ev) && data.ev !== 0;
           return (
             <div
               key={name}
@@ -111,9 +111,9 @@ export function QuizFeedback({ hand, chosenAction, tier, evLoss, actions, action
               </div>
               <span className="text-slate-400 w-12 text-right">{pct.toFixed(1)}%</span>
               <span className={`w-14 text-right font-medium ${
-                data.ev === 0 ? 'text-slate-500' : data.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
+                isNaN(data.ev) || data.ev === 0 ? 'text-slate-500' : data.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
               }`}>
-                {data.ev !== 0 ? `${data.ev >= 0 ? '+' : ''}${(data.ev / 1000).toFixed(2)}bb` : '-'}
+                {isNaN(data.ev) || data.ev === 0 ? '-' : `${data.ev >= 0 ? '+' : ''}${(data.ev / 1000).toFixed(2)}bb`}
               </span>
               {isBest && <span className="text-emerald-500 text-[10px]">★</span>}
               {isChosen && <span className="text-white text-[10px]">◄</span>}

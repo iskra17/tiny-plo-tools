@@ -52,24 +52,25 @@ export function HelpSection() {
               onClick={() => toggleItem(item.id)}
               className="flex items-center gap-1.5 w-full text-left py-1.5 px-1 rounded hover:bg-slate-800/50 transition-colors cursor-pointer"
             >
-              <span className="text-[10px] text-slate-500 flex-shrink-0">
+              <span className="text-xs text-slate-400 flex-shrink-0">
                 {isOpen ? '▾' : '▸'}
               </span>
               <span className="text-[11px] text-slate-300 font-medium truncate">
                 {title}
               </span>
+              <span className="text-[10px] text-blue-400 ml-auto flex-shrink-0">
+                {isOpen ? (lang === 'ko' ? '[접기]' : '[less]') : (lang === 'ko' ? '[더보기]' : '[more]')}
+              </span>
             </button>
 
             {/* Brief always visible */}
-            {!isOpen && (
-              <p className="text-[10px] text-slate-500 pl-4 pb-1.5 leading-tight">
-                {brief}
-              </p>
-            )}
+            <p className="text-[10px] text-slate-500 pl-5 pb-1.5 leading-tight">
+              {brief}
+            </p>
 
             {/* Detailed when expanded */}
             {isOpen && (
-              <div className="pl-4 pb-2 flex flex-col gap-1">
+              <div className="pl-5 pb-2 flex flex-col gap-1">
                 {detailed.map((line, i) => (
                   <p key={i} className="text-[11px] text-slate-400 leading-snug">
                     {line}

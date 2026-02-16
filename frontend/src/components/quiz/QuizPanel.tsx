@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect, useRef } from 'react';
+import { useReducer, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useRangeData, type HandActionEntry } from '../../hooks/useRangeData';
 import { useAppContext } from '../../context/AppContext';
 import {
@@ -6,13 +6,17 @@ import {
   getFeedbackTier,
   calculateEvLoss,
   computeSessionStats,
+  filterByDifficulty,
+  DIFFICULTY_OPTIONS,
   type HistoryEntry,
   type TierName,
+  type DifficultyLevel,
 } from './quizUtils';
 import { QuizHeader } from './QuizHeader';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizFeedback } from './QuizFeedback';
 import { QuizHistory } from './QuizHistory';
+import { DifficultySelector } from './DifficultySelector';
 
 // ---------- State ----------
 type Phase = 'question' | 'feedback';
@@ -66,12 +70,13 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
 
       const tier = getFeedbackTier(chosenFreq, isPrimary);
 
-      // EV loss
+      // EV loss (exclude NaN from derived actions)
       let maxEv = -Infinity;
       for (const d of Object.values(entry.actions)) {
-        if (d.ev > maxEv) maxEv = d.ev;
+        if (!isNaN(d.ev) && d.ev > maxEv) maxEv = d.ev;
       }
-      const evLoss = chosenData ? calculateEvLoss(maxEv, chosenData.ev) : 0;
+      const chosenEv = chosenData && !isNaN(chosenData.ev) ? chosenData.ev : NaN;
+      const evLoss = !isNaN(chosenEv) && maxEv > -Infinity ? calculateEvLoss(maxEv, chosenEv) : 0;
 
       const historyEntry: HistoryEntry = {
         hand: state.currentHand,
@@ -132,22 +137,46 @@ export function QuizPanel({ onExit }: Props) {
   const { dispatch } = useAppContext();
   const [state, quizDispatch] = useReducer(quizReducer, INITIAL_STATE);
   const initialized = useRef(false);
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
+
+  // Compute pool counts for each difficulty level
+  const poolCounts = useMemo(() => {
+    const allKeys = Array.from(handActionMap.keys());
+    const counts: Record<DifficultyLevel, number> = { easy: 0, normal: 0, hard: 0, expert: 0 };
+    for (const level of Object.keys(DIFFICULTY_OPTIONS) as DifficultyLevel[]) {
+      counts[level] = filterByDifficulty(allKeys, level, handActionMap).length;
+    }
+    return counts;
+  }, [handActionMap]);
 
   // Initialize pool when data is ready
   useEffect(() => {
     if (loading || noData || handActionMap.size === 0 || initialized.current) return;
     initialized.current = true;
-    const keys = Array.from(handActionMap.keys());
-    const pool = shuffle(keys);
+    const allKeys = Array.from(handActionMap.keys());
+    const filtered = filterByDifficulty(allKeys, difficulty, handActionMap);
+    const pool = shuffle(filtered.length > 0 ? filtered : allKeys);
     const hand = pool[0];
     quizDispatch({ type: 'START', pool, hand });
     dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
-  }, [loading, noData, handActionMap, dispatch]);
+  }, [loading, noData, handActionMap, dispatch, difficulty]);
 
   // Reset init flag if data source changes
   useEffect(() => {
     initialized.current = false;
   }, [actionOrder]);
+
+  // Re-shuffle pool when difficulty changes (if already initialized)
+  const handleDifficultyChange = useCallback((level: DifficultyLevel) => {
+    setDifficulty(level);
+    if (handActionMap.size === 0) return;
+    const allKeys = Array.from(handActionMap.keys());
+    const filtered = filterByDifficulty(allKeys, level, handActionMap);
+    const pool = shuffle(filtered.length > 0 ? filtered : allKeys);
+    const hand = pool[0];
+    quizDispatch({ type: 'START', pool, hand });
+    dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
+  }, [handActionMap, dispatch]);
 
   const handleAnswer = useCallback((action: string) => {
     const entry = handActionMap.get(state.currentHand);
@@ -157,16 +186,17 @@ export function QuizPanel({ onExit }: Props) {
 
   const handleNext = useCallback(() => {
     let { pool, poolIndex } = state;
-    // If pool exhausted, reshuffle
+    // If pool exhausted, reshuffle with difficulty filter
     if (poolIndex >= pool.length) {
-      const keys = Array.from(handActionMap.keys());
-      pool = shuffle(keys);
+      const allKeys = Array.from(handActionMap.keys());
+      const filtered = filterByDifficulty(allKeys, difficulty, handActionMap);
+      pool = shuffle(filtered.length > 0 ? filtered : allKeys);
       poolIndex = 0;
     }
     const hand = pool[poolIndex];
     quizDispatch({ type: 'NEXT', hand, pool, poolIndex: poolIndex + 1 });
     dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
-  }, [state, handActionMap, dispatch]);
+  }, [state, handActionMap, dispatch, difficulty]);
 
   const stats = computeSessionStats(state.history);
 
@@ -194,6 +224,15 @@ export function QuizPanel({ onExit }: Props) {
   return (
     <div className="flex flex-col h-full">
       <QuizHeader stats={stats} onExit={onExit} />
+
+      {/* Difficulty selector */}
+      <div className="px-3 py-2 border-b border-slate-700">
+        <DifficultySelector
+          selected={difficulty}
+          poolCounts={poolCounts}
+          onChange={handleDifficultyChange}
+        />
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         {state.phase === 'question' && state.currentHand && (
