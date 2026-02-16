@@ -13,7 +13,7 @@ import { matchesMonkerFilter } from '../../utils/monkerFilter';
 export function HoveredHandList() {
   const { state, dispatch } = useAppContext();
   const { hoveredCell, matrixState, activeTab, rangeInput } = state;
-  const { handActionMap, allHands, handFreqMap } = useRangeData();
+  const { handActionMap, allHands } = useRangeData();
 
   const isStage2 = matrixState.stage === 2 && matrixState.firstTwo !== null;
   const firstTwo = matrixState.firstTwo;
