@@ -1,36 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { api, type StrategyResponse } from '../../api/client';
+import { useRangeData } from '../../hooks/useRangeData';
 import { ACTION_COLORS } from '../../constants/poker';
 import { renderHandCompact } from '../../utils/cardDisplay';
 
+interface DisplayAction {
+  action: string;
+  actionCode: string;
+  frequency: number;
+  ev: number;
+}
+
 export function EnhancedStrategyDisplay() {
   const { state } = useAppContext();
-  const { currentSimId, selectedHands, actionCodes } = state;
-  const [strategy, setStrategy] = useState<StrategyResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { selectedHands, actionCodes } = state;
+  const { handActionMap, actionOrder, loading } = useRangeData();
 
   const actionPrefix = actionCodes.join('.');
   const hand = selectedHands.length > 0 ? selectedHands[0] : '';
 
-  useEffect(() => {
-    if (!currentSimId || !hand) {
-      setStrategy(null);
-      setError(null);
-      return;
-    }
+  // Derive strategy actions from handActionMap
+  const strategyActions = useMemo<DisplayAction[]>(() => {
+    if (!hand) return [];
+    const entry = handActionMap.get(hand);
+    if (!entry) return [];
 
-    setLoading(true);
-    setError(null);
-    api.getStrategy(currentSimId, hand, actionPrefix)
-      .then(setStrategy)
-      .catch((err) => {
-        setStrategy(null);
-        setError(err.message || 'Failed to load strategy');
-      })
-      .finally(() => setLoading(false));
-  }, [currentSimId, hand, actionPrefix]);
+    return actionOrder
+      .filter((actionName) => entry.actions[actionName])
+      .map((actionName) => ({
+        action: actionName,
+        actionCode: actionName,
+        frequency: entry.actions[actionName].frequency,
+        ev: entry.actions[actionName].ev,
+      }));
+  }, [hand, handActionMap, actionOrder]);
 
   if (!hand) {
     return (
@@ -48,15 +51,7 @@ export function EnhancedStrategyDisplay() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-4 text-center text-red-400 text-sm">
-        Error: {error}
-      </div>
-    );
-  }
-
-  if (!strategy || strategy.actions.length === 0) {
+  if (strategyActions.length === 0) {
     return (
       <div className="p-4 text-center text-slate-500 text-sm">
         No strategy data for <span className="font-mono text-slate-300">{hand}</span>
@@ -64,14 +59,14 @@ export function EnhancedStrategyDisplay() {
     );
   }
 
-  const totalFreq = strategy.actions.reduce((sum, a) => sum + a.frequency, 0);
-  const visibleActions = strategy.actions.filter((a) => {
+  const totalFreq = strategyActions.reduce((sum, a) => sum + a.frequency, 0);
+  const visibleActions = strategyActions.filter((a) => {
     const pct = totalFreq > 0 ? (a.frequency / totalFreq) * 100 : 0;
     return pct >= 0.5;
   });
 
   // Compute maxEV for highlighting
-  const actionsWithEv = strategy.actions.filter(a => a.ev !== 0);
+  const actionsWithEv = strategyActions.filter(a => a.ev !== 0);
   const maxEv = actionsWithEv.length > 0 ? Math.max(...actionsWithEv.map(a => a.ev)) : 0;
 
   return (
@@ -124,7 +119,7 @@ export function EnhancedStrategyDisplay() {
 
       {/* Action details table */}
       <div className="space-y-1">
-        {strategy.actions.map((a) => {
+        {strategyActions.map((a) => {
           const pct = totalFreq > 0 ? (a.frequency / totalFreq) * 100 : 0;
           const color = ACTION_COLORS[a.action];
           const isMaxEv = a.ev !== 0 && a.ev === maxEv;
