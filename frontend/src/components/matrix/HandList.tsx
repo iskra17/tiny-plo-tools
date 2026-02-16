@@ -32,7 +32,9 @@ export function HandList({ hands, loading }: HandListProps) {
       if (sortKey === 'hand') {
         cmp = a.hand.localeCompare(b.hand);
       } else {
-        cmp = a[sortKey] - b[sortKey];
+        const aVal = isNaN(a[sortKey]) ? -Infinity : a[sortKey];
+        const bVal = isNaN(b[sortKey]) ? -Infinity : b[sortKey];
+        cmp = aVal - bVal;
       }
       return sortDir === 'desc' ? -cmp : cmp;
     });
@@ -117,8 +119,8 @@ export function HandList({ hands, loading }: HandListProps) {
                 <div className="text-right text-slate-300">
                   {(h.frequency * 100).toFixed(0)}%
                 </div>
-                <div className={`text-right ${h.ev >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {(h.ev / 1000).toFixed(2)}
+                <div className={`text-right ${isNaN(h.ev) ? 'text-slate-500' : h.ev >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {isNaN(h.ev) ? '-' : (h.ev / 1000).toFixed(2)}
                 </div>
                 <div className="flex h-3 rounded overflow-hidden self-center">
                   {h.actions ? (

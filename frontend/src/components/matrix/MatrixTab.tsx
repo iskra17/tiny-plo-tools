@@ -11,7 +11,7 @@ import { getCachedCategories, type HandCategory } from '../../utils/handCategori
 export function MatrixTab() {
   const { state, dispatch } = useAppContext();
   const { matrixState, availableActions } = state;
-  const { handFreqMap, allHands, loading } = useRangeData();
+  const { handFreqMap, handActionMap, allHands, loading } = useRangeData();
   const [filteredHands, setFilteredHands] = useState<typeof allHands>([]);
   const [activeCategories, setActiveCategories] = useState<Set<HandCategory>>(new Set());
   const [secondTwo, setSecondTwo] = useState<{ rank1: string; rank2: string; suited: boolean } | null>(null);
@@ -230,6 +230,24 @@ export function MatrixTab() {
         payload: { stage: 2, firstTwo: { rank1, rank2, suited } },
       });
     } else {
+      // Toggle: re-clicking the same second pair resets it
+      if (secondTwo && secondTwo.rank1 === rank1 && secondTwo.rank2 === rank2 && secondTwo.suited === suited) {
+        setSecondTwo(null);
+        // Re-run stage 2 filter (all hands matching firstTwo)
+        if (matrixState.firstTwo) {
+          const { rank1: r1, rank2: r2, suited: s } = matrixState.firstTwo;
+          const { suitFilter } = matrixState;
+          const filtered = allHands.filter((h) => {
+            if (!handMatchesRanks(h.hand, r1, r2, s)) return false;
+            if (suitFilter !== 'all' && classifySuitType(h.hand) !== suitFilter) return false;
+            if (!passesCategory(h.hand)) return false;
+            return true;
+          });
+          setFilteredHands(filtered);
+        }
+        return;
+      }
+
       const { rank1: r1, rank2: r2 } = matrixState.firstTwo!;
       const { suitFilter } = matrixState;
       const matchingHands = allHands.filter((h) => {
@@ -261,9 +279,11 @@ export function MatrixTab() {
     dispatch({ type: 'SET_HOVERED_CELL', payload: { rank1, rank2, suited } });
   }, [dispatch]);
 
+  // Sticky hover: don't clear hoveredCell on mouse leave so the hand list
+  // remains visible and scrollable. It updates when a new cell is hovered.
   const handleCellLeave = useCallback(() => {
-    dispatch({ type: 'SET_HOVERED_CELL', payload: null });
-  }, [dispatch]);
+    // intentionally empty — keep last hovered data visible
+  }, []);
 
   const handleBack = () => {
     dispatch({
@@ -273,6 +293,19 @@ export function MatrixTab() {
     setFilteredHands([]);
     setSecondTwo(null);
   };
+
+  // Enrich filteredHands with totalEv and actions from handActionMap
+  const enrichedHands = useMemo(() => {
+    return filteredHands.map((h) => {
+      const entry = handActionMap.get(h.hand);
+      if (!entry) return h;
+      const actions = Object.entries(entry.actions).map(([action, data]) => ({
+        action,
+        frequency: data.frequency,
+      }));
+      return { ...h, ev: isNaN(entry.totalEv) ? h.ev : entry.totalEv, actions };
+    });
+  }, [filteredHands, handActionMap]);
 
   return (
     <div className="flex flex-col h-full">
@@ -284,31 +317,6 @@ export function MatrixTab() {
         onClear={handleCategoryClear}
       />
 
-      {matrixState.stage === 2 && matrixState.firstTwo && (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 border-b border-slate-700">
-          <button
-            onClick={handleBack}
-            className="text-xs text-blue-400 hover:text-blue-300 font-medium"
-          >
-            &larr; Back
-          </button>
-          <div className="flex gap-1">
-            <span className="px-1.5 py-0.5 bg-blue-600/30 rounded text-xs text-blue-300 font-bold">
-              {matrixState.firstTwo.rank1}
-            </span>
-            <span className="px-1.5 py-0.5 bg-blue-600/30 rounded text-xs text-blue-300 font-bold">
-              {matrixState.firstTwo.rank2}
-            </span>
-            {matrixState.firstTwo.suited && (
-              <span className="text-xs text-slate-500">suited</span>
-            )}
-          </div>
-          <span className="text-xs text-slate-500 ml-auto">
-            {filteredHands.length} hands
-          </span>
-        </div>
-      )}
-
       <MatrixGrid
         onCellClick={handleCellClick}
         onCellHover={handleCellHover}
@@ -316,10 +324,27 @@ export function MatrixTab() {
         cellColorData={matrixState.stage === 2 && stage2ColorData ? stage2ColorData : cellColorData}
         stage2ValidCells={stage2ValidCells}
         secondTwo={secondTwo}
+        handCount={filteredHands.length}
+        onResetFirst={handleBack}
+        onResetSecond={() => {
+          setSecondTwo(null);
+          // Re-run stage 2 filter (all hands matching firstTwo)
+          if (matrixState.firstTwo) {
+            const { rank1, rank2, suited } = matrixState.firstTwo;
+            const { suitFilter } = matrixState;
+            const filtered = allHands.filter((h) => {
+              if (!handMatchesRanks(h.hand, rank1, rank2, suited)) return false;
+              if (suitFilter !== 'all' && classifySuitType(h.hand) !== suitFilter) return false;
+              if (!passesCategory(h.hand)) return false;
+              return true;
+            });
+            setFilteredHands(filtered);
+          }
+        }}
       />
 
       <div className="border-t border-slate-700 flex-1 overflow-hidden">
-        <HandList hands={filteredHands} loading={loading} />
+        <HandList hands={enrichedHands} loading={loading} />
       </div>
     </div>
   );

@@ -15,6 +15,9 @@ interface MatrixGridProps {
   cellColorData?: Map<string, CellColorData>;
   stage2ValidCells?: Set<string> | null;
   secondTwo?: { rank1: string; rank2: string; suited: boolean } | null;
+  handCount?: number;
+  onResetFirst?: () => void;
+  onResetSecond?: () => void;
 }
 
 /**
@@ -57,7 +60,7 @@ function getCellStyle(data: CellColorData | undefined): React.CSSProperties | un
   return { background: `linear-gradient(to right, ${parts.join(', ')})` };
 }
 
-export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorData, stage2ValidCells, secondTwo }: MatrixGridProps) {
+export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorData, stage2ValidCells, secondTwo, handCount, onResetFirst, onResetSecond }: MatrixGridProps) {
   const { state } = useAppContext();
   const { matrixState } = state;
 
@@ -65,46 +68,67 @@ export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorDat
   const firstTwo = matrixState.firstTwo;
   const hasColorData = cellColorData && cellColorData.size > 0;
 
-  // Build card slots display
-  const cardSlots: { label: string; filled: boolean }[] = [];
-  if (firstTwo) {
-    cardSlots.push({ label: firstTwo.rank1, filled: true });
-    cardSlots.push({ label: firstTwo.rank2, filled: true });
-  } else {
-    cardSlots.push({ label: '', filled: false });
-    cardSlots.push({ label: '', filled: false });
-  }
-  if (secondTwo) {
-    cardSlots.push({ label: secondTwo.rank1, filled: true });
-    cardSlots.push({ label: secondTwo.rank2, filled: true });
-  } else {
-    cardSlots.push({ label: '', filled: false });
-    cardSlots.push({ label: '', filled: false });
-  }
+  // Suit label helper
+  const suitLabel = (s: { suited: boolean }) => s.suited ? 's' : '';
 
   return (
     <div className="p-1 relative max-w-[680px]">
-      {/* Card selection indicator */}
-      <div className="flex items-center justify-center gap-1.5 mb-1.5">
-        {cardSlots.map((slot, i) => (
-          <div
-            key={i}
-            className={`w-8 h-10 rounded border-2 flex items-center justify-center text-sm font-bold transition-all
-              ${slot.filled
-                ? i < 2
+      {/* Card selection indicator — interactive */}
+      <div className="flex items-center justify-center gap-1 mb-1.5">
+        {/* First pair */}
+        <button
+          onClick={firstTwo ? onResetFirst : undefined}
+          className={`flex gap-0.5 rounded px-1 py-0.5 transition-all ${firstTwo ? 'cursor-pointer hover:bg-slate-700/80' : 'cursor-default'}`}
+          title={firstTwo ? 'Click to reset' : ''}
+        >
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className={`w-7 h-9 rounded border-2 flex items-center justify-center text-sm font-bold transition-all
+                ${firstTwo
                   ? 'border-blue-400 bg-blue-600/30 text-blue-300'
-                  : 'border-emerald-400 bg-emerald-600/30 text-emerald-300'
-                : 'border-slate-600 bg-slate-800/50 text-slate-600'
-              }`}
-          >
-            {slot.filled ? slot.label : '?'}
-          </div>
-        ))}
-        {firstTwo && (
-          <span className="text-[10px] text-slate-500 ml-1">
-            {firstTwo.suited && 's'}
-            {secondTwo && (secondTwo.suited ? '+s' : '+o')}
-          </span>
+                  : 'border-slate-600 bg-slate-800/50 text-slate-600'
+                }`}
+            >
+              {firstTwo ? (i === 0 ? firstTwo.rank1 : firstTwo.rank2) : '?'}
+            </div>
+          ))}
+          {firstTwo && (
+            <span className="text-[10px] text-blue-400/70 self-end ml-0.5">{suitLabel(firstTwo)}</span>
+          )}
+        </button>
+
+        {/* Separator */}
+        <span className="text-slate-600 text-xs mx-0.5">+</span>
+
+        {/* Second pair */}
+        <button
+          onClick={secondTwo ? onResetSecond : undefined}
+          className={`flex gap-0.5 rounded px-1 py-0.5 transition-all ${secondTwo ? 'cursor-pointer hover:bg-slate-700/80' : 'cursor-default'}`}
+          title={secondTwo ? 'Click to reset' : ''}
+        >
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className={`w-7 h-9 rounded border-2 flex items-center justify-center text-sm font-bold transition-all
+                ${secondTwo
+                  ? 'border-emerald-400 bg-emerald-600/30 text-emerald-300'
+                  : isStage2
+                    ? 'border-slate-500 bg-slate-800/50 text-slate-500 animate-pulse'
+                    : 'border-slate-600 bg-slate-800/50 text-slate-600'
+                }`}
+            >
+              {secondTwo ? (i === 0 ? secondTwo.rank1 : secondTwo.rank2) : '?'}
+            </div>
+          ))}
+          {secondTwo && (
+            <span className="text-[10px] text-emerald-400/70 self-end ml-0.5">{suitLabel(secondTwo)}</span>
+          )}
+        </button>
+
+        {/* Hand count */}
+        {isStage2 && handCount != null && (
+          <span className="text-[10px] text-slate-500 ml-2">{handCount} hands</span>
         )}
       </div>
 
