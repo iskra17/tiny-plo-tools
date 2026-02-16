@@ -36,5 +36,13 @@ pg_hba.conf.backup
 # Claude settings
 .claude/
 
+# Wrangler
+.wrangler/
+
+# R2 upload scripts
+upload-to-r2.sh
+r2-cors.json
+upload_failures.log
+
 # Local notes (Korean)
 *.txt
