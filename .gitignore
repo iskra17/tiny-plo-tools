@@ -1,0 +1,40 @@
+node_modules/
+dist/
+.env
+*.local
+.DS_Store
+
+# Backend
+backend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp
+nul
+temp/
+
+# Data files (too large for git)
+6max 50z preflop rng/
+monker sim/
+100bb/
+100bb(2)/
+
+# Local setup scripts
+*.bat
+*.ps1
+pg_hba.conf.backup
+
+# Claude settings
+.claude/
+
+# Local notes (Korean)
+*.txt
