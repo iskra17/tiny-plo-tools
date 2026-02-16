@@ -14,6 +14,7 @@ interface MatrixGridProps {
   onCellLeave?: () => void;
   cellColorData?: Map<string, CellColorData>;
   stage2ValidCells?: Set<string> | null;
+  secondTwo?: { rank1: string; rank2: string; suited: boolean } | null;
 }
 
 /**
@@ -56,21 +57,62 @@ function getCellStyle(data: CellColorData | undefined): React.CSSProperties | un
   return { background: `linear-gradient(to right, ${parts.join(', ')})` };
 }
 
-export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorData, stage2ValidCells }: MatrixGridProps) {
+export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorData, stage2ValidCells, secondTwo }: MatrixGridProps) {
   const { state } = useAppContext();
   const { matrixState } = state;
 
   const isStage2 = matrixState.stage === 2;
-  const headerText = isStage2
-    ? 'Select your other two cards'
-    : 'Select your pair or highest two cards';
+  const firstTwo = matrixState.firstTwo;
   const hasColorData = cellColorData && cellColorData.size > 0;
+
+  // Build card slots display
+  const cardSlots: { label: string; filled: boolean }[] = [];
+  if (firstTwo) {
+    cardSlots.push({ label: firstTwo.rank1, filled: true });
+    cardSlots.push({ label: firstTwo.rank2, filled: true });
+  } else {
+    cardSlots.push({ label: '', filled: false });
+    cardSlots.push({ label: '', filled: false });
+  }
+  if (secondTwo) {
+    cardSlots.push({ label: secondTwo.rank1, filled: true });
+    cardSlots.push({ label: secondTwo.rank2, filled: true });
+  } else {
+    cardSlots.push({ label: '', filled: false });
+    cardSlots.push({ label: '', filled: false });
+  }
 
   return (
     <div className="p-1 relative max-w-[680px]">
+      {/* Card selection indicator */}
+      <div className="flex items-center justify-center gap-1.5 mb-1.5">
+        {cardSlots.map((slot, i) => (
+          <div
+            key={i}
+            className={`w-8 h-10 rounded border-2 flex items-center justify-center text-sm font-bold transition-all
+              ${slot.filled
+                ? i < 2
+                  ? 'border-blue-400 bg-blue-600/30 text-blue-300'
+                  : 'border-emerald-400 bg-emerald-600/30 text-emerald-300'
+                : 'border-slate-600 bg-slate-800/50 text-slate-600'
+              }`}
+          >
+            {slot.filled ? slot.label : '?'}
+          </div>
+        ))}
+        {firstTwo && (
+          <span className="text-[10px] text-slate-500 ml-1">
+            {firstTwo.suited && 's'}
+            {secondTwo && (secondTwo.suited ? '+s' : '+o')}
+          </span>
+        )}
+      </div>
+
       {/* Header info */}
       <div className="text-center mb-1">
-        <div className="text-xs text-slate-300 font-medium">{headerText}</div>
+        <div className="text-xs text-slate-300 font-medium">
+          {!firstTwo ? 'Select your pair or highest two cards' : !secondTwo ? 'Select your other two cards' : 'Hand selected'}
+        </div>
         {hasColorData && (
           <div className="flex items-center justify-center gap-3 mt-0.5">
             <span className="flex items-center gap-1 text-[10px] text-slate-400">
@@ -149,9 +191,20 @@ export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorDat
               // Highlight selected first pair in stage 2
               const isFirstPairSelected =
                 isStage2 &&
-                matrixState.firstTwo &&
-                ((matrixState.firstTwo.rank1 === rowRank && matrixState.firstTwo.rank2 === colRank) ||
-                 (matrixState.firstTwo.rank1 === colRank && matrixState.firstTwo.rank2 === rowRank && isDiagonal));
+                firstTwo &&
+                ((firstTwo.rank1 === rowRank && firstTwo.rank2 === colRank) ||
+                 (firstTwo.rank1 === colRank && firstTwo.rank2 === rowRank && isDiagonal));
+
+              // Highlight selected second pair
+              const cellRank1 = isUpperRight || isDiagonal ? rowRank : colRank;
+              const cellRank2 = isUpperRight || isDiagonal ? colRank : rowRank;
+              const cellSuited = isUpperRight;
+              const isSecondPairSelected =
+                isStage2 &&
+                secondTwo &&
+                secondTwo.rank1 === cellRank1 &&
+                secondTwo.rank2 === cellRank2 &&
+                secondTwo.suited === cellSuited;
 
               const disabled = isStage2 && stage2ValidCells != null && !stage2ValidCells.has(cellKey);
 
@@ -180,12 +233,12 @@ export function MatrixGrid({ onCellClick, onCellHover, onCellLeave, cellColorDat
                     }
                   }}
                   onMouseLeave={onCellLeave}
-                  style={isFirstPairSelected ? undefined : dynamicStyle}
+                  style={isFirstPairSelected || isSecondPairSelected ? undefined : dynamicStyle}
                   className={`
                     aspect-square flex items-center justify-center text-xs font-bold rounded-[2px]
                     transition-colors
                     ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
-                    ${isFirstPairSelected ? 'ring-2 ring-blue-400 bg-blue-600/60' : bgColor}
+                    ${isFirstPairSelected ? 'ring-2 ring-blue-400 bg-blue-600/60' : isSecondPairSelected ? 'ring-2 ring-emerald-400 bg-emerald-600/60' : bgColor}
                     text-white/90
                   `}
                 >

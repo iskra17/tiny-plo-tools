@@ -13,7 +13,7 @@ import { matchesMonkerFilter } from '../../utils/monkerFilter';
 export function HoveredHandList() {
   const { state, dispatch } = useAppContext();
   const { hoveredCell, matrixState, activeTab, rangeInput } = state;
-  const { handActionMap, allHands } = useRangeData();
+  const { handActionMap, allHands, handFreqMap } = useRangeData();
 
   const isStage2 = matrixState.stage === 2 && matrixState.firstTwo !== null;
   const firstTwo = matrixState.firstTwo;
@@ -28,7 +28,11 @@ export function HoveredHandList() {
         results.push({ hand, ev: entry.totalEv });
       }
     }
-    results.sort((a, b) => b.ev - a.ev);
+    results.sort((a, b) => {
+      const aEv = isNaN(a.ev) ? -Infinity : a.ev;
+      const bEv = isNaN(b.ev) ? -Infinity : b.ev;
+      return bEv - aEv;
+    });
     return results.slice(0, 30);
   }, [activeTab, rangeInput, handActionMap]);
 
@@ -38,46 +42,56 @@ export function HoveredHandList() {
 
     const { rank1, rank2, suited } = hoveredCell;
 
-    return allHands
-      .filter((h) => {
-        const ranks = extractRanks(h.hand);
-        if (ranks.length < 4) return false;
+    const matched = allHands.filter((h) => {
+      const ranks = extractRanks(h.hand);
+      if (ranks.length < 4) return false;
 
-        if (isStage2 && firstTwo) {
-          const needed = [firstTwo.rank1, firstTwo.rank2, rank1, rank2];
-          const available = [...ranks];
-          for (const r of needed) {
-            const idx = available.indexOf(r);
-            if (idx === -1) return false;
-            available.splice(idx, 1);
-          }
-
-          const groups = parseSuitGroups(h.hand);
-          if (firstTwo.suited) {
-            if (!groups.some((g) => g.includes(firstTwo.rank1) && g.includes(firstTwo.rank2))) return false;
-          }
-          if (suited) {
-            if (!groups.some((g) => g.includes(rank1) && g.includes(rank2))) return false;
-          }
-          return true;
+      if (isStage2 && firstTwo) {
+        const needed = [firstTwo.rank1, firstTwo.rank2, rank1, rank2];
+        const available = [...ranks];
+        for (const r of needed) {
+          const idx = available.indexOf(r);
+          if (idx === -1) return false;
+          available.splice(idx, 1);
         }
 
-        const temp = [...ranks];
-        const idx1 = temp.indexOf(rank1);
-        if (idx1 === -1) return false;
-        temp.splice(idx1, 1);
-        const idx2 = temp.indexOf(rank2);
-        if (idx2 === -1) return false;
-
+        const groups = parseSuitGroups(h.hand);
+        if (firstTwo.suited) {
+          if (!groups.some((g) => g.includes(firstTwo.rank1) && g.includes(firstTwo.rank2))) return false;
+        }
         if (suited) {
-          const groups = parseSuitGroups(h.hand);
-          return groups.some((g) => g.includes(rank1) && g.includes(rank2));
+          if (!groups.some((g) => g.includes(rank1) && g.includes(rank2))) return false;
         }
         return true;
+      }
+
+      const temp = [...ranks];
+      const idx1 = temp.indexOf(rank1);
+      if (idx1 === -1) return false;
+      temp.splice(idx1, 1);
+      const idx2 = temp.indexOf(rank2);
+      if (idx2 === -1) return false;
+
+      if (suited) {
+        const groups = parseSuitGroups(h.hand);
+        return groups.some((g) => g.includes(rank1) && g.includes(rank2));
+      }
+      return true;
+    });
+
+    // Use totalEv from handActionMap for correct weighted EV
+    return matched
+      .map((h) => {
+        const entry = handActionMap.get(h.hand);
+        return { hand: h.hand, ev: entry ? entry.totalEv : h.ev };
       })
-      .sort((a, b) => b.ev - a.ev)
+      .sort((a, b) => {
+        const aEv = isNaN(a.ev) ? -Infinity : a.ev;
+        const bEv = isNaN(b.ev) ? -Infinity : b.ev;
+        return bEv - aEv;
+      })
       .slice(0, 30);
-  }, [hoveredCell, allHands, isStage2, firstTwo, activeTab]);
+  }, [hoveredCell, allHands, handActionMap, isStage2, firstTwo, activeTab]);
 
   // Determine which list to show
   const isRangeMode = activeTab === 'range' && rangeInput.trim().length > 0;
@@ -140,9 +154,9 @@ export function HoveredHandList() {
                 </div>
               )}
               <span className={`text-[10px] flex-shrink-0 w-14 text-right font-medium ${
-                h.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
+                isNaN(h.ev) ? 'text-slate-500' : h.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
               }`}>
-                {h.ev >= 0 ? '+' : ''}{(h.ev / 1000).toFixed(2)}bb
+                {isNaN(h.ev) ? '-' : `${h.ev >= 0 ? '+' : ''}${(h.ev / 1000).toFixed(2)}bb`}
               </span>
             </button>
           );

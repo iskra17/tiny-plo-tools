@@ -14,6 +14,7 @@ export function MatrixTab() {
   const { handFreqMap, allHands, loading } = useRangeData();
   const [filteredHands, setFilteredHands] = useState<typeof allHands>([]);
   const [activeCategories, setActiveCategories] = useState<Set<HandCategory>>(new Set());
+  const [secondTwo, setSecondTwo] = useState<{ rank1: string; rank2: string; suited: boolean } | null>(null);
 
   // Compute per-cell color data from hand frequencies
   const cellColorData = useMemo(() => {
@@ -188,6 +189,7 @@ export function MatrixTab() {
     });
     setFilteredHands([]);
     setActiveCategories(new Set());
+    setSecondTwo(null);
   }, [availableActions, dispatch]);
 
   // Filter hands when matrix selection, suit filter, or category filter changes
@@ -248,6 +250,7 @@ export function MatrixTab() {
       });
 
       setFilteredHands(matchingHands);
+      setSecondTwo({ rank1, rank2, suited });
       if (matchingHands.length > 0) {
         dispatch({ type: 'SET_SELECTED_HANDS', payload: [matchingHands[0].hand] });
       }
@@ -268,6 +271,7 @@ export function MatrixTab() {
       payload: { stage: 1, firstTwo: null },
     });
     setFilteredHands([]);
+    setSecondTwo(null);
   };
 
   return (
@@ -311,6 +315,7 @@ export function MatrixTab() {
         onCellLeave={handleCellLeave}
         cellColorData={matrixState.stage === 2 && stage2ColorData ? stage2ColorData : cellColorData}
         stage2ValidCells={stage2ValidCells}
+        secondTwo={secondTwo}
       />
 
       <div className="border-t border-slate-700 flex-1 overflow-hidden">
