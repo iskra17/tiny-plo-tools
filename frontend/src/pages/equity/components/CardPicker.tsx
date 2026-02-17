@@ -10,7 +10,7 @@ interface CardPickerProps {
 
 export default function CardPicker({ used, onPick }: CardPickerProps) {
   return (
-    <div className="py-3">
+    <div className="py-2">
       {RANKS.map((rank) => (
         <div key={rank} className="flex gap-0.5 mb-0.5 justify-center">
           {SUITS.map((suit) => {
@@ -23,15 +23,15 @@ export default function CardPicker({ used, onPick }: CardPickerProps) {
                 onClick={() => onPick(c)}
                 style={{
                   border: u
-                    ? "1px solid #ddd"
+                    ? "1px solid #333"
                     : `1.5px solid ${SC[suit as Suit]}55`,
                   background: u
-                    ? "#f0f0f0"
+                    ? "#1e293b"
                     : `linear-gradient(135deg, white, ${SBG[suit as Suit]})`,
-                  color: u ? "#ccc" : SC[suit as Suit],
+                  color: u ? "#444" : SC[suit as Suit],
                 }}
-                className={`w-[46px] h-8 rounded-[5px] font-bold text-xs flex items-center justify-center gap-0.5 font-mono ${
-                  u ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+                className={`w-[46px] h-8 rounded font-bold text-xs flex items-center justify-center gap-0.5 font-mono ${
+                  u ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:brightness-110"
                 }`}
               >
                 {rank}

@@ -9,26 +9,26 @@ interface LangToggleProps {
 
 export default function LangToggle({ lang, setLang }: LangToggleProps) {
   return (
-    <div className="flex gap-0.5 bg-white/[0.08] rounded-full p-0.5">
+    <div className="flex gap-0.5 bg-slate-700 rounded p-0.5">
       <button
         onClick={() => setLang("ko")}
-        className={`py-1 px-3 rounded-full border-none text-xs font-semibold cursor-pointer transition-all duration-150 ${
+        className={`py-1 px-2.5 rounded border-none text-xs font-semibold cursor-pointer transition-all duration-150 ${
           lang === "ko"
-            ? "bg-indigo-500/30 text-indigo-300"
-            : "bg-transparent text-slate-500"
+            ? "bg-blue-600 text-white"
+            : "bg-transparent text-slate-400 hover:text-slate-200"
         }`}
       >
-        한국어
+        KO
       </button>
       <button
         onClick={() => setLang("en")}
-        className={`py-1 px-3 rounded-full border-none text-xs font-semibold cursor-pointer transition-all duration-150 ${
+        className={`py-1 px-2.5 rounded border-none text-xs font-semibold cursor-pointer transition-all duration-150 ${
           lang === "en"
-            ? "bg-indigo-500/30 text-indigo-300"
-            : "bg-transparent text-slate-500"
+            ? "bg-blue-600 text-white"
+            : "bg-transparent text-slate-400 hover:text-slate-200"
         }`}
       >
-        English
+        EN
       </button>
     </div>
   );

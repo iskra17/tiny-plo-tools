@@ -209,47 +209,24 @@ export default function EquityPage() {
 
   return (
     <LangContext.Provider value={lang}>
-      <div className="min-h-screen bg-slate-900 font-sans text-slate-800">
-        {/* Header */}
-        <div className="py-5 px-5 text-center relative">
-          <div className="absolute top-5 right-5">
-            <LangToggle lang={lang} setLang={changeLang} />
-          </div>
-          <div className="inline-flex items-center gap-2.5 mb-1">
-            <div className="flex gap-1">
-              {[
-                { s: "\u2660", c: "text-slate-400" },
-                { s: "\u2665", c: "text-red-400" },
-                { s: "\u2666", c: "text-blue-400" },
-                { s: "\u2663", c: "text-emerald-400" },
-              ].map((x, i) => (
-                <span key={i} className={`text-lg ${x.c} opacity-90`}>
-                  {x.s}
-                </span>
-              ))}
-            </div>
-            <h1 className="m-0 text-2xl font-black bg-gradient-to-br from-slate-100 to-slate-400 bg-clip-text text-transparent">
-              {t.header.title}
-            </h1>
-          </div>
-          <p className="m-0 text-xs text-slate-500 tracking-wider">
-            {t.header.subtitle}
-          </p>
-        </div>
+      <div className="h-full bg-slate-900 flex flex-col">
+        {/* Header — matches Solver header style */}
+        <header className="bg-slate-800 border-b border-slate-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
+          <h1 className="text-lg font-bold text-white">PLO Equity Calculator</h1>
+          <LangToggle lang={lang} setLang={changeLang} />
+        </header>
 
-        {/* Main container */}
-        <div className="max-w-[1600px] mx-auto px-4 pb-10">
-          <div className="flex gap-5 items-start max-lg:flex-col lg:[&>*]:max-w-[50%] xl:[&>:first-child]:max-w-[600px] xl:[&>:last-child]:max-w-none xl:[&>:last-child]:flex-1">
-            {/* LEFT COLUMN */}
-            <div className="flex-1 min-w-0 max-lg:w-full">
-              <div className="mb-3.5">
-                <ScenarioBuilder
-                  onApply={applyScenario}
-                  gameType={gt}
-                  open={scenarioOpen}
-                  setOpen={setScenarioOpen}
-                />
-              </div>
+        {/* Main 2-column layout */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left panel: inputs */}
+          <div className="w-2/5 flex flex-col overflow-y-auto border-r border-slate-700">
+            <div className="p-3 space-y-3">
+              <ScenarioBuilder
+                onApply={applyScenario}
+                gameType={gt}
+                open={scenarioOpen}
+                setOpen={setScenarioOpen}
+              />
 
               <SettingsBar
                 gt={gt}
@@ -271,7 +248,7 @@ export default function EquityPage() {
               />
 
               {/* Players */}
-              <div className="grid gap-2.5 mb-4">
+              <div className="space-y-2">
                 {Array.from({ length: np }).map((_, i) => (
                   <PlayerPanel
                     key={i}
@@ -289,14 +266,14 @@ export default function EquityPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2.5 mb-4">
+              <div className="flex gap-2">
                 <button
                   onClick={manCalc}
                   disabled={!canCalc || calc}
-                  className={`flex-1 py-3 px-6 border-none rounded-xl text-[15px] font-extrabold ${
+                  className={`flex-1 py-2 px-4 border-none rounded text-sm font-bold ${
                     canCalc && !calc
-                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white cursor-pointer shadow-[0_4px_20px_rgba(102,126,234,0.3)]"
-                      : "bg-white/[0.08] text-slate-500 cursor-not-allowed"
+                      ? "bg-blue-600 text-white cursor-pointer hover:bg-blue-500"
+                      : "bg-slate-700 text-slate-500 cursor-not-allowed"
                   }`}
                 >
                   {calc
@@ -307,15 +284,15 @@ export default function EquityPage() {
                 </button>
                 <button
                   onClick={clearAll}
-                  className="py-3 px-4 bg-red-500/15 text-red-500 border border-red-500/20 rounded-xl text-[13px] font-bold cursor-pointer"
+                  className="py-2 px-3 bg-red-500/15 text-red-400 border border-red-500/20 rounded text-xs font-bold cursor-pointer hover:bg-red-500/25"
                 >
                   {t.calc.clearAll}
                 </button>
               </div>
 
               {/* Help */}
-              <div className="p-3.5 bg-white/[0.03] rounded-xl border border-white/[0.06]">
-                <h4 className="m-0 mb-2 text-[13px] font-bold text-slate-500">
+              <div className="p-3 bg-slate-800 rounded border border-slate-700">
+                <h4 className="m-0 mb-2 text-xs font-bold text-slate-400">
                   {t.usage.title}
                 </h4>
                 <div className="text-[11px] text-slate-500 leading-relaxed">
@@ -350,9 +327,11 @@ export default function EquityPage() {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* RIGHT COLUMN */}
-            <div className="flex-1 min-w-0 lg:sticky lg:top-5 max-lg:w-full">
+          {/* Right panel: results */}
+          <div className="w-3/5 flex flex-col overflow-y-auto">
+            <div className="p-3 space-y-3">
               {calc && <LoadingSpinner method={cm} />}
               {!calc && res && (
                 <ResultsPanel
@@ -362,25 +341,19 @@ export default function EquityPage() {
                 />
               )}
 
-              {nextCardCalc && (
-                <div className={res ? "mt-4" : ""}>
-                  <LoadingSpinner method="exact" />
-                </div>
-              )}
+              {nextCardCalc && <LoadingSpinner method="exact" />}
               {!nextCardCalc && nextCardData && (
-                <div className={res ? "mt-4" : ""}>
-                  <NextCardPanel
-                    data={nextCardData}
-                    playerCards={pc}
-                    boardLen={bc.length}
-                    onCardClick={handleNextCardClick}
-                  />
-                </div>
+                <NextCardPanel
+                  data={nextCardData}
+                  playerCards={pc}
+                  boardLen={bc.length}
+                  onCardClick={handleNextCardClick}
+                />
               )}
 
               {!calc && !res && !nextCardCalc && !nextCardData && (
-                <div className="bg-white/[0.04] backdrop-blur-md rounded-xl py-16 px-5 border border-white/[0.08] text-center">
-                  <div className="text-5xl mb-4 opacity-30">&#x1F4CA;</div>
+                <div className="bg-slate-800 rounded border border-slate-700 py-16 px-5 text-center">
+                  <div className="text-4xl mb-3 opacity-30">&#x1F4CA;</div>
                   <p className="text-slate-500 text-sm m-0 whitespace-pre-line">
                     {t.emptyState}
                   </p>

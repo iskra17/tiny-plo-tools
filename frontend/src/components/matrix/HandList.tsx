@@ -120,7 +120,7 @@ export function HandList({ hands, loading }: HandListProps) {
                   {(h.frequency * 100).toFixed(0)}%
                 </div>
                 <div className={`text-right ${isNaN(h.ev) ? 'text-slate-500' : h.ev >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {isNaN(h.ev) ? '-' : (h.ev / 1000).toFixed(2)}
+                  {isNaN(h.ev) ? '-' : (h.ev / 2000).toFixed(2)}
                 </div>
                 <div className="flex h-3 rounded overflow-hidden self-center">
                   {h.actions ? (

@@ -378,7 +378,7 @@ export function RangeTab() {
                         <div className="flex flex-col items-end flex-shrink-0">
                           {entry.totalEv !== 0 && (
                             <span className={`text-[11px] ${entry.totalEv > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {entry.totalEv > 0 ? '+' : ''}{(entry.totalEv / 1000).toFixed(2)}bb
+                              {entry.totalEv > 0 ? '+' : ''}{(entry.totalEv / 2000).toFixed(2)}bb
                             </span>
                           )}
                           {entry.primaryFreq < 0.995 && (

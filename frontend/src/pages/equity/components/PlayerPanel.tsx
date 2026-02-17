@@ -69,35 +69,32 @@ export default function PlayerPanel({
 
   return (
     <div
-      style={{
-        border: `2px solid ${color}22`,
-        boxShadow: `0 4px 16px ${color}11`,
-      }}
-      className="bg-white rounded-xl p-4"
+      style={{ borderLeft: `3px solid ${color}` }}
+      className="bg-slate-800 rounded border border-slate-700 p-3"
     >
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-2">
         <div
-          style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}
-          className="w-7 h-7 rounded-full text-white flex items-center justify-center font-extrabold text-[13px] font-mono"
+          style={{ background: color }}
+          className="w-6 h-6 rounded-full text-white flex items-center justify-center font-extrabold text-[11px] font-mono"
         >
           {index + 1}
         </div>
-        <span className="font-bold text-sm text-slate-800">
+        <span className="font-bold text-xs text-slate-300">
           {t.player.title} {index + 1}
         </span>
         {handAnalysis && (
-          <span className="text-[10px] text-slate-400 ml-2 font-mono">
+          <span className="text-[10px] text-slate-500 ml-1 font-mono">
             {handAnalysis}
           </span>
         )}
-        <span className="text-[11px] text-slate-400 ml-auto font-mono">
+        <span className="text-[11px] text-slate-500 ml-auto font-mono">
           {cards.length}/{max}
         </span>
       </div>
 
       {/* Cards */}
-      <div className="flex gap-1.5 min-h-14 mb-2.5 flex-wrap">
+      <div className="flex gap-1.5 min-h-14 mb-2 flex-wrap">
         {cards.map((c, i) => (
           <MiniCard
             key={i}
@@ -106,7 +103,7 @@ export default function PlayerPanel({
           />
         ))}
         {Array.from({ length: max - cards.length }).map((_, i) => (
-          <EmptySlot key={`e${i}`} dark={false} />
+          <EmptySlot key={`e${i}`} />
         ))}
       </div>
 
@@ -119,22 +116,22 @@ export default function PlayerPanel({
             value={txt}
             onChange={(e) => setTxt(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
-            className="flex-1 py-1.5 px-2.5 border-[1.5px] border-slate-200 rounded-lg text-xs font-mono outline-none min-w-0 focus:border-blue-400"
+            className="flex-1 py-1.5 px-2 border border-slate-600 rounded text-xs font-mono bg-slate-700 text-slate-200 outline-none min-w-0 placeholder:text-slate-500 focus:border-blue-500"
           />
           <button
             onClick={submit}
             style={{ background: color }}
-            className="px-2.5 py-1.5 border-none rounded-lg text-xs font-semibold text-white cursor-pointer"
+            className="px-2.5 py-1.5 border-none rounded text-xs font-semibold text-white cursor-pointer"
           >
             {t.player.input}
           </button>
         </div>
         <button
           onClick={() => setPickerTarget(open ? null : `p-${index}`)}
-          className={`px-2.5 py-1.5 border-none rounded-lg text-xs font-semibold cursor-pointer ${
+          className={`px-2.5 py-1.5 border-none rounded text-xs font-semibold cursor-pointer ${
             open
-              ? "bg-slate-700 text-white"
-              : "bg-slate-100 text-slate-700"
+              ? "bg-slate-600 text-white"
+              : "bg-slate-700 text-slate-300 hover:bg-slate-600"
           }`}
         >
           {open ? t.player.close : t.player.select}
@@ -142,14 +139,14 @@ export default function PlayerPanel({
         <button
           onClick={onRandom}
           disabled={cards.length >= max}
-          className="px-2.5 py-1.5 border-none rounded-lg text-xs font-semibold bg-slate-100 text-slate-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-2.5 py-1.5 border-none rounded text-xs font-semibold bg-slate-700 text-slate-400 cursor-pointer hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Random
         </button>
         <button
           onClick={() => onChange([])}
           disabled={cards.length === 0}
-          className="px-2.5 py-1.5 border-none rounded-lg text-xs font-semibold bg-red-500/10 text-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-2.5 py-1.5 border-none rounded text-xs font-semibold bg-red-500/15 text-red-400 cursor-pointer hover:bg-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           X
         </button>
@@ -157,7 +154,7 @@ export default function PlayerPanel({
 
       {/* Picker */}
       {open && (
-        <div className="mt-2.5 border-t border-slate-100 pt-2">
+        <div className="mt-2 border-t border-slate-700 pt-2">
           <CardPicker used={allUsed} onPick={pick} />
         </div>
       )}

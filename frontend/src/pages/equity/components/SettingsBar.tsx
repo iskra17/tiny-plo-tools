@@ -27,11 +27,11 @@ function GBtn({
     <button
       onClick={onClick}
       style={extraStyle}
-      className={`font-mono font-bold text-[13px] rounded-lg cursor-pointer ${
+      className={`font-mono font-bold text-xs rounded cursor-pointer ${
         selected
-          ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none"
-          : "bg-white/[0.08] text-slate-400 border border-white/10"
-      } ${!extraStyle?.width ? "px-4 py-2" : ""}`}
+          ? "bg-blue-600 text-white border border-blue-500"
+          : "bg-slate-700 text-slate-400 border border-slate-600 hover:bg-slate-600"
+      } ${!extraStyle?.width ? "px-3 py-1.5" : ""}`}
     >
       {label}
     </button>
@@ -49,11 +49,11 @@ export default function SettingsBar({
   const t = useT();
 
   return (
-    <div className="bg-white/[0.06] backdrop-blur-md rounded-xl p-4 mb-3.5 border border-white/[0.08]">
+    <div className="bg-slate-800 rounded border border-slate-700 p-3">
       <div className="flex gap-4 flex-wrap items-center">
         {/* Game Type */}
         <div>
-          <label className="text-[10px] font-bold text-slate-500 tracking-wider mb-1.5 block">
+          <label className="text-[10px] font-bold text-slate-500 tracking-wider mb-1.5 block uppercase">
             {t.settings.gameType}
           </label>
           <div className="flex gap-1">
@@ -70,7 +70,7 @@ export default function SettingsBar({
 
         {/* Players */}
         <div>
-          <label className="text-[10px] font-bold text-slate-500 tracking-wider mb-1.5 block">
+          <label className="text-[10px] font-bold text-slate-500 tracking-wider mb-1.5 block uppercase">
             {t.settings.players}
           </label>
           <div className="flex gap-1">
@@ -80,7 +80,7 @@ export default function SettingsBar({
                 label={n}
                 selected={np === n}
                 onClick={() => onNpChange(n)}
-                extraStyle={{ width: 36, height: 34, padding: 0 }}
+                extraStyle={{ width: 32, height: 30, padding: 0 }}
               />
             ))}
           </div>
@@ -88,7 +88,7 @@ export default function SettingsBar({
 
         {/* Simulation */}
         <div>
-          <label className="text-[10px] font-bold text-slate-500 tracking-wider mb-1.5 block">
+          <label className="text-[10px] font-bold text-slate-500 tracking-wider mb-1.5 block uppercase">
             {t.settings.simulation}{" "}
             <span className="text-slate-600 font-normal">({t.settings.preflop})</span>
           </label>
@@ -99,7 +99,7 @@ export default function SettingsBar({
                 label={n >= 1000 ? `${n / 1000}K` : String(n)}
                 selected={sc === n}
                 onClick={() => onScChange(n)}
-                extraStyle={{ fontSize: 11, padding: "8px 12px" }}
+                extraStyle={{ fontSize: 11, padding: "6px 10px" }}
               />
             ))}
           </div>

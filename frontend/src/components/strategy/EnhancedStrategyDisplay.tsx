@@ -77,7 +77,7 @@ export function EnhancedStrategyDisplay() {
         <span className="text-xs text-slate-500">@ {actionPrefix || 'root'}</span>
         {maxEv !== 0 && (
           <span className={`text-xs font-medium ml-auto ${maxEv >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            maxEV: {maxEv >= 0 ? '+' : ''}{(maxEv / 1000).toFixed(2)}bb
+            maxEV: {maxEv >= 0 ? '+' : ''}{(maxEv / 2000).toFixed(2)}bb
           </span>
         )}
       </div>
@@ -102,12 +102,12 @@ export function EnhancedStrategyDisplay() {
                 <div className="text-slate-300">Freq: {pct.toFixed(1)}%</div>
                 {!isNaN(a.ev) && a.ev !== 0 && (
                   <div className={a.ev >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                    EV: {a.ev >= 0 ? '+' : ''}{(a.ev / 1000).toFixed(2)}bb
+                    EV: {a.ev >= 0 ? '+' : ''}{(a.ev / 2000).toFixed(2)}bb
                   </div>
                 )}
                 {!isNaN(a.ev) && a.ev !== 0 && maxEv !== 0 && a.ev !== maxEv && (
                   <div className="text-amber-400">
-                    Diff: {((a.ev - maxEv) / 1000).toFixed(2)}bb
+                    Diff: {((a.ev - maxEv) / 2000).toFixed(2)}bb
                   </div>
                 )}
                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
@@ -142,9 +142,11 @@ export function EnhancedStrategyDisplay() {
               <span className={`text-xs w-14 text-right font-medium ${
                 isNaN(a.ev) || a.ev === 0 ? 'text-slate-500' : a.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
               }`}>
-                {isNaN(a.ev) || a.ev === 0 ? '-' : `${a.ev >= 0 ? '+' : ''}${(a.ev / 1000).toFixed(2)}bb`}
+                {isNaN(a.ev) || a.ev === 0 ? '-' : `${a.ev >= 0 ? '+' : ''}${(a.ev / 2000).toFixed(2)}bb`}
               </span>
-              {isMaxEv && <span className="text-[10px] text-emerald-500">★</span>}
+              <span className="w-4 flex-shrink-0 text-center">
+                {isMaxEv && <span className="text-[10px] text-emerald-500">{'★'}</span>}
+              </span>
             </div>
           );
         })}

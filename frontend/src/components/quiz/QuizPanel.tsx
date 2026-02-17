@@ -7,16 +7,21 @@ import {
   calculateEvLoss,
   computeSessionStats,
   filterByDifficulty,
+  filterByCategory,
   DIFFICULTY_OPTIONS,
+  TIMER_OPTIONS,
   type HistoryEntry,
   type TierName,
   type DifficultyLevel,
+  type TimerSeconds,
 } from './quizUtils';
 import { QuizHeader } from './QuizHeader';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizFeedback } from './QuizFeedback';
 import { QuizHistory } from './QuizHistory';
+import { QuizReport } from './QuizReport';
 import { DifficultySelector } from './DifficultySelector';
+import { ALL_CATEGORIES, CATEGORY_LABELS, type HandCategory } from '../../utils/handCategories';
 
 // ---------- State ----------
 type Phase = 'question' | 'feedback';
@@ -127,6 +132,18 @@ const INITIAL_STATE: QuizState = {
   history: [],
 };
 
+// ---------- Helpers ----------
+function buildPool(
+  handActionMap: Map<string, HandActionEntry>,
+  difficulty: DifficultyLevel,
+  category: HandCategory | null,
+): string[] {
+  const allKeys = Array.from(handActionMap.keys());
+  let filtered = filterByDifficulty(allKeys, difficulty, handActionMap);
+  filtered = filterByCategory(filtered, category);
+  return shuffle(filtered.length > 0 ? filtered : allKeys);
+}
+
 // ---------- Component ----------
 interface Props {
   onExit: () => void;
@@ -137,46 +154,83 @@ export function QuizPanel({ onExit }: Props) {
   const { dispatch } = useAppContext();
   const [state, quizDispatch] = useReducer(quizReducer, INITIAL_STATE);
   const initialized = useRef(false);
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
+
+  // Settings state
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>('normal');
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState<TimerSeconds>(15);
+  const [categoryFilter, setCategoryFilter] = useState<HandCategory | null>(null);
+  const [reviewMode, setReviewMode] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   // Compute pool counts for each difficulty level
   const poolCounts = useMemo(() => {
     const allKeys = Array.from(handActionMap.keys());
     const counts: Record<DifficultyLevel, number> = { easy: 0, normal: 0, hard: 0, expert: 0 };
     for (const level of Object.keys(DIFFICULTY_OPTIONS) as DifficultyLevel[]) {
-      counts[level] = filterByDifficulty(allKeys, level, handActionMap).length;
+      let filtered = filterByDifficulty(allKeys, level, handActionMap);
+      filtered = filterByCategory(filtered, categoryFilter);
+      counts[level] = filtered.length;
     }
     return counts;
-  }, [handActionMap]);
+  }, [handActionMap, categoryFilter]);
+
+  // Category counts for current difficulty
+  const categoryCounts = useMemo(() => {
+    const allKeys = Array.from(handActionMap.keys());
+    const filtered = filterByDifficulty(allKeys, difficulty, handActionMap);
+    const counts: Record<string, number> = {};
+    for (const cat of ALL_CATEGORIES) {
+      counts[cat] = filterByCategory(filtered, cat).length;
+    }
+    return counts;
+  }, [handActionMap, difficulty]);
 
   // Initialize pool when data is ready
   useEffect(() => {
     if (loading || noData || handActionMap.size === 0 || initialized.current) return;
     initialized.current = true;
-    const allKeys = Array.from(handActionMap.keys());
-    const filtered = filterByDifficulty(allKeys, difficulty, handActionMap);
-    const pool = shuffle(filtered.length > 0 ? filtered : allKeys);
+    const pool = buildPool(handActionMap, difficulty, categoryFilter);
     const hand = pool[0];
     quizDispatch({ type: 'START', pool, hand });
     dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
-  }, [loading, noData, handActionMap, dispatch, difficulty]);
+  }, [loading, noData, handActionMap, dispatch, difficulty, categoryFilter]);
 
   // Reset init flag if data source changes
   useEffect(() => {
     initialized.current = false;
   }, [actionOrder]);
 
-  // Re-shuffle pool when difficulty changes (if already initialized)
+  // Restart quiz with current settings (shared logic)
+  const restartQuiz = useCallback((overrideDifficulty?: DifficultyLevel, overrideCategory?: HandCategory | null) => {
+    if (handActionMap.size === 0) return;
+    const d = overrideDifficulty ?? difficulty;
+    const c = overrideCategory !== undefined ? overrideCategory : categoryFilter;
+    const pool = buildPool(handActionMap, d, c);
+    const hand = pool[0];
+    setReviewMode(false);
+    setShowReport(false);
+    quizDispatch({ type: 'START', pool, hand });
+    dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
+  }, [handActionMap, dispatch, difficulty, categoryFilter]);
+
+  // Re-shuffle pool when difficulty changes
   const handleDifficultyChange = useCallback((level: DifficultyLevel) => {
     setDifficulty(level);
+    setReviewMode(false);
+    restartQuiz(level);
+  }, [restartQuiz]);
+
+  // Category filter change
+  const handleCategoryChange = useCallback((cat: HandCategory | null) => {
+    setCategoryFilter(cat);
+    setReviewMode(false);
     if (handActionMap.size === 0) return;
-    const allKeys = Array.from(handActionMap.keys());
-    const filtered = filterByDifficulty(allKeys, level, handActionMap);
-    const pool = shuffle(filtered.length > 0 ? filtered : allKeys);
+    const pool = buildPool(handActionMap, difficulty, cat);
     const hand = pool[0];
     quizDispatch({ type: 'START', pool, hand });
     dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
-  }, [handActionMap, dispatch]);
+  }, [handActionMap, dispatch, difficulty]);
 
   const handleAnswer = useCallback((action: string) => {
     const entry = handActionMap.get(state.currentHand);
@@ -184,19 +238,65 @@ export function QuizPanel({ onExit }: Props) {
     quizDispatch({ type: 'ANSWER', action, entry, actionOrder });
   }, [handActionMap, state.currentHand, actionOrder]);
 
+  // Timer timeout: pick the lowest-frequency action (Blunder)
+  const handleTimeout = useCallback(() => {
+    const entry = handActionMap.get(state.currentHand);
+    if (!entry || state.phase !== 'question') return;
+    // Find lowest frequency action
+    let minFreq = Infinity;
+    let worstAction = actionOrder[0];
+    for (const name of actionOrder) {
+      const d = entry.actions[name];
+      if (d && d.frequency < minFreq) {
+        minFreq = d.frequency;
+        worstAction = name;
+      }
+    }
+    quizDispatch({ type: 'ANSWER', action: worstAction, entry, actionOrder });
+  }, [handActionMap, state.currentHand, state.phase, actionOrder]);
+
   const handleNext = useCallback(() => {
     let { pool, poolIndex } = state;
-    // If pool exhausted, reshuffle with difficulty filter
+
+    // Review mode: if pool exhausted, end review
+    if (reviewMode && poolIndex >= pool.length) {
+      setReviewMode(false);
+      // Resume normal quiz with fresh pool
+      const newPool = buildPool(handActionMap, difficulty, categoryFilter);
+      const hand = newPool[0];
+      quizDispatch({ type: 'NEXT', hand, pool: newPool, poolIndex: 1 });
+      dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
+      return;
+    }
+
+    // If pool exhausted, reshuffle with current filters
     if (poolIndex >= pool.length) {
-      const allKeys = Array.from(handActionMap.keys());
-      const filtered = filterByDifficulty(allKeys, difficulty, handActionMap);
-      pool = shuffle(filtered.length > 0 ? filtered : allKeys);
+      pool = buildPool(handActionMap, difficulty, categoryFilter);
       poolIndex = 0;
     }
     const hand = pool[poolIndex];
     quizDispatch({ type: 'NEXT', hand, pool, poolIndex: poolIndex + 1 });
     dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
-  }, [state, handActionMap, dispatch, difficulty]);
+  }, [state, handActionMap, dispatch, difficulty, categoryFilter, reviewMode]);
+
+  // Start review mode
+  const handleStartReview = useCallback(() => {
+    const wrongHands = state.history
+      .filter(h => h.tier !== 'Perfect' && h.tier !== 'Correct')
+      .map(h => h.hand);
+    // Deduplicate
+    const unique = [...new Set(wrongHands)];
+    if (unique.length === 0) return;
+    const pool = shuffle([...unique]);
+    const hand = pool[0];
+    setReviewMode(true);
+    quizDispatch({ type: 'NEXT', hand, pool, poolIndex: 1 });
+    dispatch({ type: 'SET_SELECTED_HANDS', payload: [hand] });
+  }, [state.history, dispatch]);
+
+  // Show report
+  const handleShowReport = useCallback(() => setShowReport(true), []);
+  const handleRestart = useCallback(() => restartQuiz(), [restartQuiz]);
 
   const stats = computeSessionStats(state.history);
 
@@ -221,17 +321,103 @@ export function QuizPanel({ onExit }: Props) {
     );
   }
 
+  // Report view
+  if (showReport) {
+    return (
+      <div className="flex flex-col h-full">
+        <QuizHeader stats={stats} onExit={onExit} />
+        <div className="flex-1 overflow-y-auto">
+          <QuizReport stats={stats} history={state.history} onRestart={handleRestart} onExit={onExit} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <QuizHeader stats={stats} onExit={onExit} />
+      <QuizHeader stats={stats} reviewMode={reviewMode} onExit={onExit} />
 
-      {/* Difficulty selector */}
-      <div className="px-3 py-2 border-b border-slate-700">
-        <DifficultySelector
-          selected={difficulty}
-          poolCounts={poolCounts}
-          onChange={handleDifficultyChange}
-        />
+      {/* Settings bar: difficulty + category + timer */}
+      <div className="px-3 py-2 border-b border-slate-700 space-y-2">
+        {/* Difficulty + Timer row */}
+        <div className="flex items-center gap-3">
+          <DifficultySelector
+            selected={difficulty}
+            poolCounts={poolCounts}
+            onChange={handleDifficultyChange}
+          />
+          <div className="ml-auto flex items-center gap-1.5">
+            {/* Report button */}
+            {stats.total >= 5 && (
+              <button
+                onClick={handleShowReport}
+                className="text-[10px] px-2 py-1 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+              >
+                Report
+              </button>
+            )}
+            {/* Timer toggle */}
+            <button
+              onClick={() => setTimerEnabled(!timerEnabled)}
+              className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                timerEnabled ? 'bg-blue-600/30 text-blue-400 ring-1 ring-blue-500/40' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+              }`}
+            >
+              {'\u23F1'} {timerEnabled ? 'ON' : 'OFF'}
+            </button>
+            {/* Timer seconds selector */}
+            {timerEnabled && (
+              <select
+                value={timerSeconds}
+                onChange={(e) => setTimerSeconds(Number(e.target.value) as TimerSeconds)}
+                className="text-[10px] bg-slate-700 text-slate-300 rounded px-1.5 py-1 border-none outline-none"
+              >
+                {TIMER_OPTIONS.map(s => (
+                  <option key={s} value={s}>{s}s</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        {/* Category filter chips */}
+        <div className="flex items-center gap-1 flex-wrap">
+          <button
+            onClick={() => handleCategoryChange(null)}
+            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+              categoryFilter === null
+                ? 'bg-slate-600 text-white ring-1 ring-slate-400/40'
+                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+            }`}
+          >
+            All
+          </button>
+          {ALL_CATEGORIES.map(cat => {
+            const count = categoryCounts[cat] || 0;
+            if (count === 0) return null;
+            return (
+              <button
+                key={cat}
+                onClick={() => handleCategoryChange(cat === categoryFilter ? null : cat)}
+                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                  cat === categoryFilter
+                    ? 'bg-slate-600 text-white ring-1 ring-slate-400/40'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                }`}
+              >
+                {CATEGORY_LABELS[cat]} <span className="opacity-50">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Review mode indicator */}
+        {reviewMode && (
+          <div className="flex items-center gap-2 text-[10px] text-orange-400 bg-orange-500/10 rounded px-2 py-1">
+            <span>복습 모드: 틀린 핸드 {state.pool.length - state.poolIndex + 1}개 남음</span>
+            <button onClick={() => { setReviewMode(false); restartQuiz(); }} className="ml-auto text-slate-400 hover:text-white">취소</button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -239,7 +425,10 @@ export function QuizPanel({ onExit }: Props) {
           <QuizQuestion
             hand={state.currentHand}
             actionOrder={actionOrder}
+            timerEnabled={timerEnabled}
+            timerSeconds={timerSeconds}
             onAnswer={handleAnswer}
+            onTimeout={handleTimeout}
           />
         )}
 
@@ -251,11 +440,16 @@ export function QuizPanel({ onExit }: Props) {
             evLoss={state.evLoss}
             actions={state.currentActions}
             actionOrder={actionOrder}
+            streak={stats.streak}
             onNext={handleNext}
           />
         )}
 
-        <QuizHistory history={state.history} />
+        <QuizHistory
+          history={state.history}
+          reviewMode={reviewMode}
+          onStartReview={handleStartReview}
+        />
       </div>
     </div>
   );

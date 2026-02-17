@@ -83,7 +83,7 @@ export default function NextCardPanel({
             {SS[suit]}
           </span>
         </div>
-        <div className="flex-1 relative h-4 bg-white/[0.04] rounded overflow-hidden">
+        <div className="flex-1 relative h-4 bg-slate-700 rounded overflow-hidden">
           <div
             style={{
               width: `${eq}%`,
@@ -112,14 +112,14 @@ export default function NextCardPanel({
   };
 
   return (
-    <div className="bg-white/[0.06] backdrop-blur-md rounded-xl p-5 border border-white/10 animate-fadeIn">
+    <div className="bg-slate-800 rounded border border-slate-700 p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2.5">
-        <h3 className="m-0 text-base font-extrabold text-slate-300">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h3 className="m-0 text-sm font-bold text-slate-300">
           {t.nextCard.title(label)}
         </h3>
-        <div className="flex gap-1.5 flex-wrap">
-          <div className="flex gap-0.5 bg-white/[0.06] rounded-lg p-0.5">
+        <div className="flex gap-1">
+          <div className="flex gap-0.5 bg-slate-700 rounded p-0.5">
             {(
               [
                 { id: "chart" as const, label: t.nextCard.chart },
@@ -129,10 +129,10 @@ export default function NextCardPanel({
               <button
                 key={m.id}
                 onClick={() => setViewMode(m.id)}
-                className={`py-1 px-2.5 rounded-md border-none text-[11px] font-semibold cursor-pointer ${
+                className={`py-1 px-2 rounded border-none text-[11px] font-semibold cursor-pointer ${
                   viewMode === m.id
-                    ? "bg-indigo-500/30 text-indigo-300"
-                    : "bg-transparent text-slate-500"
+                    ? "bg-blue-600 text-white"
+                    : "bg-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
                 {m.label}
@@ -143,7 +143,7 @@ export default function NextCardPanel({
       </div>
 
       {/* Controls row */}
-      <div className="flex gap-3 mb-3.5 flex-wrap items-center">
+      <div className="flex gap-3 mb-3 flex-wrap items-center">
         {/* Sort by player */}
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] text-slate-500">
@@ -162,7 +162,7 @@ export default function NextCardPanel({
                   background: sortBy === i ? `${PC[i]}22` : "transparent",
                   color: sortBy === i ? PC[i] : "#888",
                 }}
-                className="py-0.5 px-2.5 rounded-xl text-[11px] font-bold cursor-pointer"
+                className="py-0.5 px-2.5 rounded text-[11px] font-bold cursor-pointer"
               >
                 P{i + 1}
               </button>
@@ -178,10 +178,10 @@ export default function NextCardPanel({
           <div className="flex gap-0.5">
             <button
               onClick={() => setSuitFilter("all")}
-              className={`py-0.5 px-2 rounded-xl text-[11px] font-semibold cursor-pointer ${
+              className={`py-0.5 px-2 rounded text-[11px] font-semibold cursor-pointer ${
                 suitFilter === "all"
-                  ? "border-2 border-indigo-500 bg-indigo-500/15 text-indigo-300"
-                  : "border border-white/10 bg-transparent text-slate-500"
+                  ? "border-2 border-blue-500 bg-blue-500/15 text-blue-300"
+                  : "border border-slate-600 bg-transparent text-slate-500"
               }`}
             >
               {t.nextCard.all}
@@ -199,7 +199,7 @@ export default function NextCardPanel({
                     suitFilter === s ? `${SC[s]}22` : "transparent",
                   color: SC[s],
                 }}
-                className="py-0.5 px-2 rounded-xl text-[13px] font-bold cursor-pointer"
+                className="py-0.5 px-2 rounded text-[13px] font-bold cursor-pointer"
               >
                 {SS[s]}
               </button>
@@ -244,7 +244,7 @@ export default function NextCardPanel({
               <div
                 key={item.card}
                 onClick={() => onCardClick?.(item.card)}
-                className={`rounded-lg p-2 flex flex-col items-center gap-1 transition-transform duration-150 ${
+                className={`rounded p-2 flex flex-col items-center gap-1 transition-transform duration-150 ${
                   onCardClick
                     ? "cursor-pointer hover:scale-105"
                     : "cursor-default"
@@ -253,7 +253,7 @@ export default function NextCardPanel({
                     ? "bg-emerald-500/15 border border-emerald-500/30"
                     : isBad
                       ? "bg-red-500/15 border border-red-500/30"
-                      : "bg-white/[0.04] border border-white/[0.08]"
+                      : "bg-slate-700 border border-slate-600"
                 }`}
               >
                 <div className="flex items-center gap-0.5">
@@ -282,7 +282,7 @@ export default function NextCardPanel({
                   {item.equities.map((peq, pi) => (
                     <div
                       key={pi}
-                      className="h-[3px] bg-white/[0.06] rounded-sm overflow-hidden"
+                      className="h-[3px] bg-slate-600 rounded-sm overflow-hidden"
                     >
                       <div
                         style={{
@@ -301,7 +301,7 @@ export default function NextCardPanel({
       )}
 
       {/* Summary stats */}
-      <div className="mt-3.5 py-2.5 px-3.5 bg-white/[0.03] rounded-[10px] flex gap-5 flex-wrap justify-center">
+      <div className="mt-3 py-2 px-3 bg-slate-900 rounded flex gap-5 flex-wrap justify-center">
         {Array.from({ length: numPlayers }).map((_, pi) => {
           const eqs = data.map((d) => d.equities[pi]);
           const best = Math.max(...eqs).toFixed(1);

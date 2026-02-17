@@ -177,7 +177,7 @@ export function HoveredHandList() {
               <span className={`text-[10px] flex-shrink-0 w-14 text-right font-medium ${
                 isNaN(h.ev) ? 'text-slate-500' : h.ev >= 0 ? 'text-emerald-400' : 'text-red-400'
               }`}>
-                {isNaN(h.ev) ? '-' : `${h.ev >= 0 ? '+' : ''}${(h.ev / 1000).toFixed(2)}bb`}
+                {isNaN(h.ev) ? '-' : `${h.ev >= 0 ? '+' : ''}${(h.ev / 2000).toFixed(2)}bb`}
               </span>
             </button>
           );

@@ -197,12 +197,12 @@ export default function ScenarioBuilder({
                       key={o.id}
                       onClick={() => !dis && smartToggle(sel, setSel, o.id)}
                       disabled={dis}
-                      className={`py-1 px-2.5 rounded-md text-[11px] font-semibold whitespace-nowrap transition-all duration-150 ${
+                      className={`py-1 px-2.5 rounded text-[11px] font-semibold whitespace-nowrap transition-all duration-150 ${
                         selected
-                          ? "border-2 border-indigo-500 bg-indigo-500/20 text-indigo-300"
+                          ? "border-2 border-blue-500 bg-blue-500/20 text-blue-300"
                           : dis
-                            ? "border-[1.5px] border-white/10 bg-white/[0.02] text-slate-600 cursor-not-allowed opacity-40"
-                            : "border-[1.5px] border-white/10 bg-white/[0.04] text-slate-400 cursor-pointer"
+                            ? "border border-slate-700 bg-slate-800 text-slate-600 cursor-not-allowed opacity-40"
+                            : "border border-slate-600 bg-slate-800 text-slate-400 cursor-pointer hover:bg-slate-700"
                       }`}
                     >
                       {handName(o.id)}
@@ -222,16 +222,16 @@ export default function ScenarioBuilder({
       {/* Trigger button */}
       <button
         onClick={() => setOpen(!open)}
-        className={`w-full py-3.5 px-5 rounded-xl text-sm font-bold cursor-pointer flex items-center justify-center gap-2.5 transition-all duration-200 ${
+        className={`w-full py-2 px-4 rounded text-sm font-bold cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 ${
           open
-            ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none"
-            : "bg-gradient-to-br from-indigo-500/15 to-purple-600/15 text-indigo-300 border-[1.5px] border-indigo-500/30"
+            ? "bg-blue-600 text-white border border-blue-500"
+            : "bg-slate-800 text-blue-400 border border-slate-700 hover:bg-slate-700"
         }`}
       >
         {t.scenario.title}
         <span
           className={`text-[11px] font-normal ${
-            open ? "text-white/70" : "text-indigo-400/60"
+            open ? "text-white/70" : "text-slate-500"
           }`}
         >
           {open ? t.scenario.close : t.scenario.presetAndCustom}
@@ -247,22 +247,22 @@ export default function ScenarioBuilder({
             className="fixed inset-0 bg-black/60 z-[9999] animate-fadeIn"
           />
           {/* Modal */}
-          <div className="absolute top-full left-0 right-0 mt-2 w-full max-h-[70vh] overflow-y-auto bg-[rgba(15,12,41,0.98)] backdrop-blur-xl rounded-xl border border-white/[0.12] z-[10000] animate-fadeIn shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+          <div className="absolute top-full left-0 right-0 mt-1 w-full max-h-[70vh] overflow-y-auto bg-slate-850 rounded border border-slate-600 z-[10000] shadow-[0_8px_32px_rgba(0,0,0,0.5)]" style={{ backgroundColor: '#0f172a' }}>
             {/* Header */}
-            <div className="px-4 py-4 border-b border-white/[0.06] flex items-center justify-between sticky top-0 bg-[rgba(15,12,41,0.98)] z-10 rounded-t-xl">
-              <span className="text-[15px] font-extrabold text-slate-300">
+            <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between sticky top-0 z-10 rounded-t" style={{ backgroundColor: '#0f172a' }}>
+              <span className="text-sm font-bold text-slate-300">
                 {t.scenario.title}
               </span>
               <button
                 onClick={() => setOpen(false)}
-                className="bg-white/[0.08] border-none rounded-lg py-1.5 px-3 text-slate-500 text-xs cursor-pointer font-semibold"
+                className="bg-slate-700 border-none rounded py-1 px-2.5 text-slate-400 text-xs cursor-pointer font-semibold hover:bg-slate-600"
               >
                 {t.scenario.close}
               </button>
             </div>
 
             {/* Tabs */}
-            <div className="flex px-4 pt-3 gap-2">
+            <div className="flex px-4 pt-3 gap-1.5">
               {(
                 [
                   { id: "presets" as const, l: t.scenario.preset },
@@ -272,10 +272,10 @@ export default function ScenarioBuilder({
                 <button
                   key={tb.id}
                   onClick={() => setTab(tb.id)}
-                  className={`flex-1 py-2.5 px-4 rounded-[10px] cursor-pointer text-[13px] font-bold transition-all duration-200 ${
+                  className={`flex-1 py-2 px-3 rounded cursor-pointer text-xs font-bold transition-all duration-200 ${
                     tab === tb.id
-                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-[0_4px_12px_rgba(102,126,234,0.3)]"
-                      : "bg-white/10 text-slate-400 border border-white/20 hover:bg-white/[0.18] hover:-translate-y-px"
+                      ? "bg-blue-600 text-white border border-blue-500"
+                      : "bg-slate-700 text-slate-400 border border-slate-600 hover:bg-slate-600"
                   }`}
                 >
                   {tb.l}
@@ -292,7 +292,7 @@ export default function ScenarioBuilder({
                       key={i}
                       onClick={() => apply(pr)}
                       disabled={gen}
-                      className="p-3 px-4 rounded-[10px] bg-white/[0.04] border border-white/[0.08] text-slate-300 cursor-pointer text-left flex items-center gap-3 hover:bg-white/[0.08] disabled:cursor-wait"
+                      className="p-2.5 px-3 rounded bg-slate-800 border border-slate-700 text-slate-300 cursor-pointer text-left flex items-center gap-3 hover:bg-slate-700 disabled:cursor-wait"
                     >
                       <div className="flex-1">
                         <div className="text-[13px] font-bold mb-0.5">
@@ -312,12 +312,12 @@ export default function ScenarioBuilder({
               {tab === "custom" && (
                 <div>
                   {renderOpts(p1s, setP1s, "P1")}
-                  <div className="h-px bg-white/[0.06] my-4" />
+                  <div className="h-px bg-slate-700 my-4" />
                   {renderOpts(p2s, setP2s, "P2")}
 
                   {/* Selection summary */}
                   {(p1s.length > 0 || p2s.length > 0) && (
-                    <div className="bg-white/[0.04] rounded-[10px] p-3 mb-3 border border-white/[0.06]">
+                    <div className="bg-slate-800 rounded p-3 mb-3 border border-slate-700">
                       <div className="text-xs text-slate-400 mb-1">
                         <strong style={{ color: PC[0] }}>P1:</strong>{" "}
                         {p1s.map((id) => handName(id)).join(" + ") ||
@@ -335,10 +335,10 @@ export default function ScenarioBuilder({
                     <button
                       onClick={custom}
                       disabled={gen || !p1s.length || !p2s.length}
-                      className={`flex-1 p-3 rounded-[10px] border-none text-sm font-bold cursor-pointer ${
+                      className={`flex-1 py-2 px-4 rounded border-none text-sm font-bold cursor-pointer ${
                         p1s.length && p2s.length
-                          ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
-                          : "bg-white/[0.08] text-slate-500"
+                          ? "bg-blue-600 text-white hover:bg-blue-500"
+                          : "bg-slate-700 text-slate-500"
                       } disabled:cursor-not-allowed`}
                     >
                       {gen ? t.scenario.generating : t.scenario.generate}
@@ -349,7 +349,7 @@ export default function ScenarioBuilder({
                         setP2s([]);
                         setErr("");
                       }}
-                      className="p-3 px-4 rounded-[10px] border border-white/10 bg-transparent text-slate-500 text-xs font-semibold cursor-pointer"
+                      className="py-2 px-3 rounded border border-slate-600 bg-transparent text-slate-500 text-xs font-semibold cursor-pointer hover:bg-slate-700"
                     >
                       {t.scenario.reset}
                     </button>

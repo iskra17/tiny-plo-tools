@@ -2,17 +2,18 @@
 
 export interface TierConfig {
   label: string;
+  labelKo: string;
   color: string;       // tailwind text color
   bgColor: string;     // tailwind bg color
   borderColor: string; // tailwind border color
 }
 
 export const TIER_CONFIG: Record<string, TierConfig> = {
-  Perfect:    { label: 'Perfect',    color: 'text-emerald-400', bgColor: 'bg-emerald-500/20', borderColor: 'border-emerald-500/40' },
-  Correct:    { label: 'Correct',    color: 'text-green-400',   bgColor: 'bg-green-500/20',   borderColor: 'border-green-500/40' },
-  Inaccuracy: { label: 'Inaccuracy', color: 'text-yellow-400',  bgColor: 'bg-yellow-500/20',  borderColor: 'border-yellow-500/40' },
-  Mistake:    { label: 'Mistake',    color: 'text-orange-400',  bgColor: 'bg-orange-500/20',  borderColor: 'border-orange-500/40' },
-  Blunder:    { label: 'Blunder',    color: 'text-red-400',     bgColor: 'bg-red-500/20',     borderColor: 'border-red-500/40' },
+  Perfect:    { label: 'Perfect',    labelKo: '\uD37C\uD399\uD2B8',   color: 'text-emerald-400', bgColor: 'bg-emerald-500/20', borderColor: 'border-emerald-500/40' },
+  Correct:    { label: 'Correct',    labelKo: '\uC815\uB2F5',         color: 'text-green-400',   bgColor: 'bg-green-500/20',   borderColor: 'border-green-500/40' },
+  Inaccuracy: { label: 'Inaccuracy', labelKo: '\uBD80\uC815\uD655',   color: 'text-yellow-400',  bgColor: 'bg-yellow-500/20',  borderColor: 'border-yellow-500/40' },
+  Mistake:    { label: 'Mistake',    labelKo: '\uC2E4\uC218',         color: 'text-orange-400',  bgColor: 'bg-orange-500/20',  borderColor: 'border-orange-500/40' },
+  Blunder:    { label: 'Blunder',    labelKo: '\uB300\uC545\uC218',   color: 'text-red-400',     bgColor: 'bg-red-500/20',     borderColor: 'border-red-500/40' },
 };
 
 export type TierName = keyof typeof TIER_CONFIG;
@@ -34,11 +35,11 @@ export function getFeedbackTier(
 }
 
 /**
- * EV loss in bb (maxEV − chosenEV) / 1000
+ * EV loss in bb (maxEV − chosenEV) / 2000  (MonkerSolver unit: 2000 = 1bb)
  * Returns 0 if chosen action has the highest EV.
  */
 export function calculateEvLoss(maxEv: number, chosenEv: number): number {
-  return Math.max(0, (maxEv - chosenEv) / 1000);
+  return Math.max(0, (maxEv - chosenEv) / 2000);
 }
 
 /**
@@ -65,6 +66,8 @@ export interface SessionStats {
   accuracy: number;       // 0-1 (Perfect+Correct / total)
   avgEvLoss: number;      // bb per hand
   tiers: Record<TierName, number>;
+  streak: number;
+  bestStreak: number;
 }
 
 // ---------- Difficulty ----------
@@ -102,15 +105,40 @@ export function filterByDifficulty(
   });
 }
 
+// ---------- Timer ----------
+
+export const TIMER_OPTIONS = [10, 15, 20, 30] as const;
+export type TimerSeconds = typeof TIMER_OPTIONS[number];
+
+// ---------- Category Filter ----------
+
+import { getCachedCategories, type HandCategory } from '../../utils/handCategories';
+
+export function filterByCategory(
+  keys: string[],
+  category: HandCategory | null,
+): string[] {
+  if (!category) return keys;
+  return keys.filter(key => getCachedCategories(key).includes(category));
+}
+
 export function computeSessionStats(history: HistoryEntry[]): SessionStats {
   const tiers: Record<TierName, number> = {
     Perfect: 0, Correct: 0, Inaccuracy: 0, Mistake: 0, Blunder: 0,
   };
   let totalEvLoss = 0;
+  let streak = 0;
+  let bestStreak = 0;
 
   for (const h of history) {
     tiers[h.tier]++;
     totalEvLoss += h.evLoss;
+    if (h.tier === 'Perfect' || h.tier === 'Correct') {
+      streak++;
+      if (streak > bestStreak) bestStreak = streak;
+    } else {
+      streak = 0;
+    }
   }
 
   const total = history.length;
@@ -120,5 +148,7 @@ export function computeSessionStats(history: HistoryEntry[]): SessionStats {
     accuracy: total > 0 ? correct / total : 0,
     avgEvLoss: total > 0 ? totalEvLoss / total : 0,
     tiers,
+    streak,
+    bestStreak,
   };
 }
